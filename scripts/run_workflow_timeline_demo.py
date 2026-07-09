@@ -1,6 +1,9 @@
 # -*- coding: utf-8 -*-
 """ADOS workflow + timeline walking skeleton 데모.
 
+단계별(stage-specific) 디버깅용 데모다.
+전체 파이프라인은 scripts/run_full_dummy_pipeline.py를 사용한다.
+
 흐름: 채널 준비 → 프로젝트 생성 → workflow 초기화 → 더미 타임라인 생성
       → TIMELINE stage 결과 기록·완료 → 다음 단계로 전환
 

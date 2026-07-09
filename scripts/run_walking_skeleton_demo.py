@@ -1,6 +1,9 @@
 # -*- coding: utf-8 -*-
 """ADOS walking skeleton 데모: Template → Channel → Project.
 
+단계별(stage-specific) 디버깅용 데모다.
+전체 파이프라인은 scripts/run_full_dummy_pipeline.py를 사용한다.
+
 실행: 프로젝트 루트에서  python scripts/run_walking_skeleton_demo.py
 """
 import sys

@@ -1,6 +1,9 @@
 # -*- coding: utf-8 -*-
 """ADOS Quality → Publishing → Analytics → Learning walking skeleton 데모.
 
+단계별(stage-specific) 디버깅용 데모다.
+전체 파이프라인은 scripts/run_full_dummy_pipeline.py를 사용한다.
+
 앞 단계(R→…→EDITING)는 기존 데모 로직을 재사용해 QUALITY까지 진행한 뒤,
 QUALITY → AUTO_FIX(skip) → PACKAGE → READY → PUBLISHED → ANALYTICS → LEARNING을
 더미로 수행하고 AI_EVOLUTION 단계로 전환한다.

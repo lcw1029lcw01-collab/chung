@@ -1,6 +1,9 @@
 # -*- coding: utf-8 -*-
 """ADOS Direction → Timeline → Visual walking skeleton 데모.
 
+단계별(stage-specific) 디버깅용 데모다.
+전체 파이프라인은 scripts/run_full_dummy_pipeline.py를 사용한다.
+
 앞 단계(R→K→S)는 기존 데모 로직을 재사용해 DIRECTION까지 진행한 뒤,
 DIRECTION → TIMELINE → VISUAL 더미 산출물을 만들고 MOTION 단계로 전환한다.
 
