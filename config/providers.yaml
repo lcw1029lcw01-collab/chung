@@ -1,0 +1,43 @@
+# Provider placeholders
+# 근거: docs/14_PROVIDER_ENGINE.md #7 provider.yaml Schema
+# 엔진은 Provider를 직접 호출하지 않는다. 반드시 Adapter를 통한다.
+
+providers:
+  visual:
+    interface: VisualProviderInterface
+    default_adapter: MidjourneyAdapter
+    provider_name: midjourney
+    mode: manual
+    enabled: true
+
+  motion:
+    interface: MotionProviderInterface
+    default_adapter: MidjourneyVideoAdapter
+    provider_name: midjourney_video
+    mode: manual
+    enabled: true
+
+  voice:
+    interface: VoiceProviderInterface
+    default_adapter: TypecastAdapter
+    provider_name: typecast
+    mode: semi_automated
+    enabled: true
+
+  subtitle:
+    interface: SubtitleProviderInterface
+    default_adapter: InternalSubtitleAdapter
+    provider_name: internal_subtitle
+    mode: automated
+    enabled: true
+
+  editing:
+    interface: EditingProviderInterface
+    default_adapter: InternalEditingAdapter
+    provider_name: internal_editing
+    mode: automated
+    enabled: true
+
+rules:
+  engine_must_not_call_provider_directly: true
+  require_adapter: true

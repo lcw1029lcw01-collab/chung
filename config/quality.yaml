@@ -1,0 +1,10 @@
+# Quality score thresholds
+# 근거: docs/26_QUALITY_ENGINE.md #9 Quality Score Thresholds
+# 단, Hard Fail은 점수보다 우선한다.
+
+quality_thresholds:
+  pass: 95                              # 95~100 PASS
+  human_review_recommended: 90          # 90~94
+  auto_fix_required: 80                 # 80~89
+  partial_regeneration_required: 70     # 70~79
+  fail: 70                              # 70 미만 FAIL / ESCALATION_REQUIRED

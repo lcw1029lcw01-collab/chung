@@ -1,0 +1,15 @@
+# ADOS project-level settings
+# 근거: docs/00_AI_CONTEXT.md, docs/15_WORKFLOW_ORCHESTRATOR.md (Run Modes)
+
+company_name: CHUNG COMPANY
+system_name: ADOS
+version: 1.0.0
+
+default_language: ko
+supported_languages:
+  - ko
+  - en
+
+# v1.0에서는 full_auto를 기본 사용하지 않는다 (15_WORKFLOW_ORCHESTRATOR.md #7)
+default_run_mode: auto_until_package
+human_review_required: true
