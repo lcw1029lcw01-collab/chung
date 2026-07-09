@@ -185,3 +185,53 @@ class FullPipelineRunner:
             key: {"path": rel, "exists": (project_path / rel).is_file()}
             for key, rel in KEY_OUTPUTS.items()
         }
+
+    # --- 업로드 준비까지 포함한 전체 실행 ---
+    def run_full_dummy_pipeline_with_upload_preparation(self) -> dict:
+        """전체 dummy 파이프라인 완주 후 업로드 준비 산출물까지 생성한다.
+
+        실자산 미등록·사람 검토 미승인 상태이므로 최종 upload_ready는
+        false가 정상이다. PASS를 강제하지 않는다.
+        """
+        from engines.assets import AssetRegistry
+        from engines.final_quality import FinalQualityGate
+        from engines.reporting import OperationReportGenerator, RunReportGenerator
+        from engines.review import HumanReviewEngine
+        from engines.upload import UploadPreparer
+
+        summary = self.run_full_dummy_pipeline()
+        project_path = Path(summary["project_path"])
+
+        RunReportGenerator(self.logger).create_run_report(project_path)
+
+        registry = AssetRegistry(self.logger)
+        registry.create_asset_requirements(project_path)
+        registry.create_production_asset_manifest(project_path)
+        registry.create_asset_readiness_report(project_path)
+
+        HumanReviewEngine(self.logger).create_review_checkpoints(project_path)
+
+        final_gate = FinalQualityGate(self.logger)
+        final_report = final_gate.create_final_quality_report(project_path)
+
+        preparer = UploadPreparer(self.logger)
+        preparer.create_youtube_metadata_package(project_path)
+        preparer.create_upload_readiness_checklist(project_path)
+        preparer.create_manual_upload_instructions(project_path)
+
+        operation = OperationReportGenerator(self.logger)
+        operation_report = operation.create_operation_report(project_path)
+
+        summary["upload_preparation"] = {
+            "final_decision": final_report["final_decision"],
+            "upload_ready": final_report["upload_ready"],
+            "upload_blockers": final_report["upload_blockers"],
+            "asset_readiness_report": str(registry.readiness_path(project_path)),
+            "human_review_summary": str(project_path / "reports" / "human_review_summary.json"),
+            "final_quality_report": str(final_gate.report_path(project_path)),
+            "youtube_metadata_package": str(preparer.metadata_path(project_path)),
+            "upload_readiness_checklist": str(preparer.checklist_path(project_path)),
+            "operation_report": str(operation.report_path(project_path)),
+            "next_manual_actions": operation_report["next_manual_actions"],
+        }
+        return summary
