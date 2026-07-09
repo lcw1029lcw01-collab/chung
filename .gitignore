@@ -1,0 +1,37 @@
+# Python cache
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+.Python
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+
+# Virtual environments
+.venv/
+venv/
+env/
+
+# Environment / secrets
+.env
+.env.*
+
+# OS files
+.DS_Store
+Thumbs.db
+
+# Logs (폴더 구조는 유지, 내용만 제외)
+*.log
+logs/*.log
+logs/events.jsonl
+
+# Outputs (outputs/* 로 지정해 .gitkeep 예외가 동작하도록 함)
+outputs/*
+
+# Temp
+*.tmp
+
+# Keep folder placeholders tracked
+!logs/.gitkeep
+!outputs/.gitkeep
