@@ -42,13 +42,19 @@ class TimelineEngine:
         project = load_json(project_path / "project.json")
         load_json(project_path / "topic.json")  # 존재 검증 (없으면 구조화 에러)
 
+        # direction_plan이 있으면 연출 정보를 타임라인에 반영한다 (없으면 기존 동작).
+        direction_plan = None
+        direction_path = project_path / "direction" / "direction_plan.json"
+        if direction_path.is_file():
+            direction_plan = load_json(direction_path)
+
         duration = int(project["duration"]["target_seconds"])
         hook = max(1, round(duration * _HOOK_RATIO))
         ending = max(1, round(duration * _ENDING_RATIO))
         explanation = duration - hook - ending
 
         def scene(scene_id, order, purpose, seconds, motion_required, motion_reason):
-            return {
+            data = {
                 "scene_id": scene_id,
                 "order": order,
                 "purpose": purpose,
@@ -58,6 +64,9 @@ class TimelineEngine:
                 "subtitle": {"required": True},
                 "motion": {"required": motion_required, "reason": motion_reason},
             }
+            if direction_plan is not None:
+                data["visual_style"] = direction_plan["visual_style"]
+            return data
 
         timeline = {
             "project_id": project["project_id"],
@@ -72,6 +81,9 @@ class TimelineEngine:
                 scene("SC003", 3, "ending", ending, False, None),
             ],
         }
+        if direction_plan is not None:
+            timeline["direction_plan_ref"] = "direction/direction_plan.json"
+            timeline["pacing"] = direction_plan["pacing"]
         TimelineValidator.validate(timeline)
 
         folder = project_path / TIMELINE_DIR
