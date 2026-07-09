@@ -9,6 +9,7 @@ project.json, topic.json과 표준 하위 폴더를 만든다.
 """
 import re
 from datetime import datetime, timezone
+from zoneinfo import ZoneInfo
 
 from core import (
     ADOSFileNotFoundError,
@@ -65,6 +66,21 @@ class ProjectEngine:
         self.paths = path_manager or ADOSPathManager()
         self.logger = logger
 
+    def _resolve_timezone(self):
+        """config/ados.yaml의 timezone을 사용한다.
+
+        config가 없거나(테스트 임시 루트 등) 시스템에 tz 데이터가 없어
+        ZoneInfo 로드가 실패하면 UTC로 동작한다.
+        """
+        try:
+            config = load_yaml(self.paths.config / "ados.yaml")
+            tz_name = config.get("timezone") if isinstance(config, dict) else None
+            if tz_name:
+                return ZoneInfo(tz_name)
+        except Exception:
+            pass
+        return timezone.utc
+
     def create_project(self, request: dict) -> dict:
         ADOSValidator.require_fields(
             request, PROJECT_REQUEST_FIELDS, location="ProjectEngine.create_project"
@@ -80,8 +96,9 @@ class ProjectEngine:
             )
         channel = load_yaml(channel_yaml)
 
-        now = datetime.now(timezone.utc)
-        slug = make_topic_slug(request["topic"])
+        now = datetime.now(self._resolve_timezone())
+        # topic_slug가 오면 그것을 정제해 사용, 없으면 topic에서 생성 (기존 동작)
+        slug = make_topic_slug(request.get("topic_slug") or request["topic"])
         project_id = f"{now:%Y%m%d}-{now:%H%M%S}-{channel_id}-{slug}"
 
         base = self.paths.projects / channel_id / f"{now:%Y}" / f"{now:%m}"

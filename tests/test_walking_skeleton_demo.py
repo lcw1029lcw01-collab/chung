@@ -17,7 +17,7 @@ sys.path.insert(0, str(PROJECT_ROOT / "scripts"))
 from core import ADOSPathManager  # noqa: E402
 from engines.template import TemplateLoader  # noqa: E402
 from create_sample_channel import channel_exists, create_sample_channel  # noqa: E402
-from create_sample_project import create_sample_project  # noqa: E402
+from create_sample_project import SAMPLE_PROJECT_REQUEST, create_sample_project  # noqa: E402
 from run_walking_skeleton_demo import SAMPLE_TEMPLATE_ID, run_demo  # noqa: E402
 
 DOCS_DIR = PROJECT_ROOT / "docs"
@@ -75,6 +75,15 @@ class TestSampleScriptsInTempRoot(unittest.TestCase):
         self.assertTrue((folder / "topic.json").is_file())
         self.assertTrue(str(folder).startswith(str(self.pm.projects)))
 
+    def test_sample_project_uses_english_slug(self):
+        """한국어 topic이어도 topic_slug(million-year-human)로 project_id가 생성된다."""
+        self.assertEqual(SAMPLE_PROJECT_REQUEST["topic_slug"], "million-year-human")
+        create_sample_channel(self.pm)
+        result = create_sample_project(self.pm)
+        self.assertRegex(
+            result["project_id"], r"^\d{8}-\d{6}-future-million-year-human$"
+        )
+
     def test_demo_end_to_end(self):
         result = run_demo(self.pm)
         self.assertTrue(result["channel_created"])
@@ -93,13 +102,24 @@ class TestZRepoUntouched(unittest.TestCase):
         )
         self.assertEqual(current, _DOCS_SNAPSHOT)
 
-    def test_no_real_channel_or_project_created(self):
-        """테스트가 실제 저장소에 채널/프로젝트를 만들지 않았는지 확인."""
-        self.assertFalse((PROJECT_ROOT / "channels" / "future").exists())
-        real_projects = [
-            p for p in (PROJECT_ROOT / "projects").iterdir() if p.name != ".gitkeep"
-        ]
-        self.assertEqual(real_projects, [])
+    def test_runtime_outputs_ignored_by_git(self):
+        """channels/*, projects/* 런타임 산출물이 git에서 무시되는지 확인."""
+        import shutil as _shutil
+        import subprocess
+        if not _shutil.which("git"):
+            self.skipTest("git 없음")
+        for target in ("channels/future", "projects/future"):
+            rc = subprocess.run(
+                ["git", "check-ignore", "-q", target],
+                cwd=PROJECT_ROOT,
+            ).returncode
+            self.assertEqual(rc, 0, f"{target}가 gitignore되지 않음")
+        # .gitkeep은 계속 추적되어야 한다
+        tracked = subprocess.run(
+            ["git", "ls-files", "channels/.gitkeep", "projects/.gitkeep"],
+            cwd=PROJECT_ROOT, capture_output=True, text=True,
+        ).stdout.split()
+        self.assertEqual(len(tracked), 2, ".gitkeep 추적이 풀렸음")
 
 
 if __name__ == "__main__":

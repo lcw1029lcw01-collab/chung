@@ -16,6 +16,7 @@ from engines.project import ProjectEngine  # noqa: E402
 SAMPLE_PROJECT_REQUEST = {
     "channel_id": "future",
     "topic": "100만 년 후 인간은 어떤 모습일까?",
+    "topic_slug": "million-year-human",
     "target_languages": ["ko", "en"],
     "duration_seconds": 900,
 }

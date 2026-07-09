@@ -29,9 +29,15 @@ logs/events.jsonl
 # Outputs (outputs/* 로 지정해 .gitkeep 예외가 동작하도록 함)
 outputs/*
 
+# Runtime data — 스크립트 실행으로 생성되는 채널/프로젝트는 커밋하지 않는다
+channels/*
+projects/*
+
 # Temp
 *.tmp
 
 # Keep folder placeholders tracked
 !logs/.gitkeep
 !outputs/.gitkeep
+!channels/.gitkeep
+!projects/.gitkeep

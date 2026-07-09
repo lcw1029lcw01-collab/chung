@@ -10,6 +10,9 @@ supported_languages:
   - ko
   - en
 
+# project_id 타임스탬프 등에 사용하는 시간대 (로드 실패 시 UTC fallback)
+timezone: Asia/Seoul
+
 # v1.0에서는 full_auto를 기본 사용하지 않는다 (15_WORKFLOW_ORCHESTRATOR.md #7)
 default_run_mode: auto_until_package
 human_review_required: true

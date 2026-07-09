@@ -6,10 +6,20 @@
 import sys
 import tempfile
 import unittest
+from datetime import datetime, timezone
 from pathlib import Path
+from zoneinfo import ZoneInfo, ZoneInfoNotFoundError
 
 PROJECT_ROOT = Path(__file__).resolve().parent.parent
 sys.path.insert(0, str(PROJECT_ROOT))
+
+
+def _seoul_tz_available() -> bool:
+    try:
+        ZoneInfo("Asia/Seoul")
+        return True
+    except ZoneInfoNotFoundError:
+        return False
 
 from core import (  # noqa: E402
     ADOSFileNotFoundError,
@@ -167,6 +177,29 @@ class TestProjectEngine(unittest.TestCase):
             make_topic_slug("a b c d e f g h i j"), "a-b-c-d-e-f-g-h"
         )
         self.assertEqual(make_topic_slug("한글만 있는 주제"), "topic")
+
+    def test_topic_slug_request_field_used(self):
+        """topic_slug를 주면 정제해서 project_id에 사용한다."""
+        self.request["topic_slug"] = "Million Year Human!"
+        result = self.engine.create_project(self.request)
+        self.assertRegex(
+            result["project_id"], r"^\d{8}-\d{6}-future-million-year-human$"
+        )
+
+    def test_resolve_timezone_fallback_utc(self):
+        """config/ados.yaml이 없으면 UTC로 동작한다."""
+        self.assertEqual(self.engine._resolve_timezone(), timezone.utc)
+
+    @unittest.skipUnless(_seoul_tz_available(), "tz 데이터 없음 (tzdata 미설치)")
+    def test_project_timestamp_uses_configured_timezone(self):
+        """config timezone(Asia/Seoul)이 project_id 타임스탬프에 반영된다."""
+        from core import write_yaml
+        write_yaml(self.pm.config / "ados.yaml", {"timezone": "Asia/Seoul"})
+        self.assertEqual(self.engine._resolve_timezone(), ZoneInfo("Asia/Seoul"))
+        result = self.engine.create_project(self.request)
+        ts = datetime.strptime(result["project_id"][:15], "%Y%m%d-%H%M%S")
+        now_kst = datetime.now(ZoneInfo("Asia/Seoul")).replace(tzinfo=None)
+        self.assertLess(abs((now_kst - ts).total_seconds()), 120)
 
 
 class TestZDocsUntouched(unittest.TestCase):
