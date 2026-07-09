@@ -1,0 +1,13 @@
+# 최소 샘플 템플릿 (walking skeleton)
+# 전체 Template System 스키마는 docs/08_TEMPLATE_SYSTEM.md 기준으로 이후 확장한다.
+
+template_id: future_documentary_template
+name: Future Documentary Template
+version: 1.0.0
+status: ACTIVE
+category: future
+description: 미래를 다큐멘터리 스타일로 다루는 채널을 만들기 위한 최소 샘플 템플릿.
+default_language: ko
+supported_languages:
+  - ko
+  - en
