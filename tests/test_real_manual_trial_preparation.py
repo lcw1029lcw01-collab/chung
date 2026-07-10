@@ -152,17 +152,22 @@ class TestPrepareTrial(TrialBase):
         md = guide.guide_md_path(self.project_path).read_text(encoding="utf-8")
         self.assertIn("REAL MANUAL TRIAL GUIDE", md)
         self.assertIn("video/final_video.mp4", md)
+        # 마크다운 가이드에도 단일 진실(source of truth) 안내가 포함된다
+        self.assertIn("source of truth", md)
 
-    def test_guide_expected_files_deterministic(self):
+    def test_guide_expected_files_match_intake_manifest(self):
         guide = ManualTrialGuide().load_trial_guide(self.project_path)
         files = [e["file"] for e in guide["expected_asset_files"]]
-        self.assertIn("images/SC001.png", files)
-        self.assertIn("motion/SC001.mp4", files)
-        self.assertIn("audio/voice_ko.mp3", files)
-        self.assertIn("subtitles/subtitles_ko.srt", files)
-        self.assertIn("subtitles/subtitles_en.srt", files)
-        self.assertIn("video/final_video.mp4", files)
-        self.assertIn("thumbnail/thumbnail.jpg", files)
+        # intake manifest의 expected_file_path와 정확히 일치해야 한다 (단일 진실)
+        intake = self.runner.loop.intake.load_asset_intake_manifest(
+            self.project_path
+        )
+        prefix = f"manual_assets/{self.project_id}/"
+        expected = [
+            i["expected_file_path"][len(prefix):] for i in intake["items"]
+        ]
+        self.assertEqual(files, expected)
+        self.assertIn("source of truth", guide["source_of_truth_note"])
         # export pack 3종이 가이드에 연결된다
         self.assertEqual(len(guide["provider_export_pack_paths"]), 3)
         # 체크리스트는 기대 파일 + 검증/검토/최종화 단계를 포함한다
@@ -170,6 +175,25 @@ class TestPrepareTrial(TrialBase):
             ManualTrialGuide().checklist_path(self.project_path)
         )
         self.assertEqual(len(checklist["items"]), len(files) + 3)
+
+    def test_guide_fallback_without_intake_manifest(self):
+        intake_path = self.runner.loop.intake.manifest_path(self.project_path)
+        backup = intake_path.with_name("asset_intake_manifest.json.bak")
+        intake_path.rename(backup)
+        try:
+            guide = ManualTrialGuide().create_trial_guide(self.project_path)
+            files = [e["file"] for e in guide["expected_asset_files"]]
+            # intake manifest가 없으면 plan 기반 결정적 fallback 이름을 쓴다
+            self.assertIn("images/SC001.png", files)
+            self.assertIn("motion/SC001.mp4", files)
+            self.assertIn("audio/voice_ko.mp3", files)
+            self.assertIn("video/final_video.mp4", files)
+            self.assertIn("thumbnail/thumbnail.jpg", files)
+            self.assertIn("source of truth", guide["source_of_truth_note"])
+        finally:
+            backup.rename(intake_path)
+            # 공유 상태 원복 — intake 기반 가이드 재생성
+            ManualTrialGuide().create_trial_guide(self.project_path)
 
 
 class TestValidateWithoutFiles(TrialBase):

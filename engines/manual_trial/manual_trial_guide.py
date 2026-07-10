@@ -17,18 +17,24 @@ from core import (
     write_json,
     write_text,
 )
-from engines.manual_production import ManualWorkspaceManager
+from engines.manual_production import ManualIntakeManager, ManualWorkspaceManager
 
 REPORTS_DIR = "reports"
 GUIDE_FILE = "manual_trial_guide.json"
 CHECKLIST_FILE = "manual_trial_checklist.json"
 GUIDE_MD_FILE = "REAL_MANUAL_TRIAL_GUIDE.md"
 
+SOURCE_OF_TRUTH_NOTE = (
+    "The intake manifest expected_file_path is the source of truth "
+    "for manual asset placement."
+)
+
 GUIDE_REQUIRED_FIELDS = [
     "project_id",
     "topic",
     "manual_workspace_path",
     "expected_asset_files",
+    "source_of_truth_note",
     "provider_export_pack_paths",
     "human_steps",
     "safety_warnings",
@@ -69,6 +75,7 @@ class ManualTrialGuide:
     def __init__(self, logger: ADOSLogger | None = None):
         self.logger = logger
         self.workspaces = ManualWorkspaceManager(logger)
+        self.intake = ManualIntakeManager(logger)
 
     def guide_path(self, project_path: str | Path) -> Path:
         return Path(project_path) / REPORTS_DIR / GUIDE_FILE
@@ -79,8 +86,22 @@ class ManualTrialGuide:
     def guide_md_path(self, project_path: str | Path) -> Path:
         return self.workspaces.workspace_path(project_path) / GUIDE_MD_FILE
 
+    def _expected_from_intake(self, project_path: Path, workspace: Path) -> list | None:
+        """intake manifest가 있으면 그 expected_file_path를 그대로 쓴다 (단일 진실)."""
+        if not self.intake.manifest_path(project_path).is_file():
+            return None
+        manifest = self.intake.load_asset_intake_manifest(project_path)
+        prefix = f"{workspace.parent.name}/{workspace.name}/"
+        expected = []
+        for item in manifest["items"]:
+            file = item["expected_file_path"]
+            if file.startswith(prefix):
+                file = file[len(prefix):]
+            expected.append({"asset_type": item["asset_type"], "file": file})
+        return expected
+
     def _expected_asset_files(self, project_path: Path, project: dict) -> list:
-        """plan·프로젝트 언어 설정에서 결정적 기대 파일 목록을 만든다."""
+        """plan·프로젝트 언어 설정에서 결정적 기대 파일 목록을 만든다 (fallback)."""
         expected = []
 
         visual_plan_path = project_path / "assets" / "images" / "visual_plan.json"
@@ -115,13 +136,16 @@ class ManualTrialGuide:
         project_path = Path(project_path)
         project = load_json(project_path / "project.json")
         workspace = self.workspaces.workspace_path(project_path)
-        expected = self._expected_asset_files(project_path, project)
+        # intake manifest가 단일 진실 — 없을 때만 plan 기반 fallback을 쓴다
+        expected = self._expected_from_intake(project_path, workspace) \
+            or self._expected_asset_files(project_path, project)
 
         guide = {
             "project_id": project["project_id"],
             "topic": project["topic"]["title"],
             "manual_workspace_path": str(workspace),
             "expected_asset_files": expected,
+            "source_of_truth_note": SOURCE_OF_TRUTH_NOTE,
             "provider_export_pack_paths": [
                 rel for rel in PROVIDER_EXPORT_PACKS
                 if (project_path / rel).is_file()
@@ -174,6 +198,8 @@ class ManualTrialGuide:
             f"- workspace: {guide['manual_workspace_path']}",
             "",
             "## Expected Files (이 경로에 실제 파일을 배치)",
+            "",
+            f"> {guide['source_of_truth_note']}",
             "",
         ]
         lines += [
