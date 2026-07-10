@@ -119,7 +119,10 @@ class ManualProductionLoop:
                 )
                 asset_id = asset["asset_id"]
             item["status"] = STATUS_REGISTERED
-            item["notes"] = f"registered as {asset_id}"
+            item["asset_registry_id"] = asset_id
+            # 사람이 남긴 노트(TEST ONLY 표시 포함)를 덮어쓰지 않고 덧붙인다
+            note = f"registered as {asset_id}"
+            item["notes"] = f"{item['notes']}; {note}" if item["notes"] else note
             registered += 1
         if registered:
             write_json(self.intake.manifest_path(project_path), manifest)

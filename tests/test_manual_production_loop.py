@@ -14,6 +14,7 @@ from pathlib import Path
 
 PROJECT_ROOT = Path(__file__).resolve().parent.parent
 sys.path.insert(0, str(PROJECT_ROOT))
+sys.path.insert(0, str(PROJECT_ROOT / "scripts"))
 
 from core import (  # noqa: E402
     ADOSFileNotFoundError,
@@ -32,6 +33,10 @@ from engines.manual_production.manual_workspace_manager import (  # noqa: E402
     ASSET_FOLDERS,
 )
 from engines.pipeline import FullPipelineRunner  # noqa: E402
+from run_test_only_upload_gate_simulation import (  # noqa: E402
+    SIM_REPORT_FILE,
+    mark_reports_test_only,
+)
 
 DOCS_DIR = PROJECT_ROOT / "docs"
 # docs/00~32 + MASTER_PLAN 불변 검증 (33은 v0.2 수동 루프 신규 문서라 제외)
@@ -195,7 +200,8 @@ class TestImportReadyAssets(LoopBase):
         source = self.tmp_root / "external_source" / "made_by_human.png"
         write_text(source, PLACEHOLDER_TEXT)
         self.loop.intake.update_asset_intake_item(
-            self.project_path, image_item["item_id"], file_path=str(source)
+            self.project_path, image_item["item_id"], file_path=str(source),
+            notes="사람이 배치함",
         )
         self.loop.intake.update_asset_intake_item(
             self.project_path, video_item["item_id"],
@@ -229,11 +235,18 @@ class TestImportReadyAssets(LoopBase):
 
         # intake item 상태가 REGISTERED로 갱신되고 재실행 시 중복 등록되지 않는다
         reloaded = self.loop.intake.load_asset_intake_manifest(self.project_path)
-        statuses = {
-            i["item_id"]: i["status"] for i in reloaded["items"]
-        }
-        self.assertEqual(statuses[image_item["item_id"]], "REGISTERED")
-        self.assertEqual(statuses[video_item["item_id"]], "REGISTERED")
+        items = {i["item_id"]: i for i in reloaded["items"]}
+        img = items[image_item["item_id"]]
+        vid = items[video_item["item_id"]]
+        self.assertEqual(img["status"], "REGISTERED")
+        self.assertEqual(vid["status"], "REGISTERED")
+        # 기존 노트는 보존되고 등록 정보가 덧붙는다 + asset_registry_id 기록
+        self.assertTrue(img["asset_registry_id"])
+        self.assertEqual(
+            img["notes"], f"사람이 배치함; registered as {img['asset_registry_id']}"
+        )
+        self.assertTrue(vid["asset_registry_id"])
+        self.assertEqual(vid["notes"], f"registered as {vid['asset_registry_id']}")
         self.assertEqual(self.loop.import_ready_assets(self.project_path), 0)
 
     def test_missing_files_keep_upload_ready_false(self):
@@ -242,6 +255,8 @@ class TestImportReadyAssets(LoopBase):
         report = self.loop.final_gate.load_final_quality_report(self.project_path)
         self.assertEqual(report["final_decision"], "BLOCKED")
         self.assertIn("real_assets_missing", report["upload_blockers"])
+        # 일반 경로 보고서에는 TEST ONLY 마커가 없다
+        self.assertNotIn("test_only_simulation", report)
 
 
 class TestReviewApprovalAloneNotEnough(LoopBase):
@@ -270,6 +285,8 @@ class TestReviewApprovalAloneNotEnough(LoopBase):
         self.assertFalse(report["upload_ready"])
         self.assertEqual(report["registered_asset_count"], 0)
         self.assertIn("No upload was performed", report["disclaimer"])
+        # 일반 경로 보고서에는 TEST ONLY 마커가 없다
+        self.assertNotIn("test_only_simulation", report)
         for field in (
             "workspace_path", "intake_manifest_path", "human_review_status",
             "final_quality_decision", "blockers", "created_at",
@@ -286,7 +303,8 @@ class TestUploadGatePassTestOnly(LoopBase):
             placeholder = self.tmp_root / item["expected_file_path"]
             write_text(placeholder, PLACEHOLDER_TEXT)
             self.loop.intake.update_asset_intake_item(
-                self.project_path, item["item_id"], file_path=str(placeholder)
+                self.project_path, item["item_id"], file_path=str(placeholder),
+                notes="TEST ONLY placeholder — not real media",
             )
         registered = self.loop.import_ready_assets(self.project_path)
         self.assertEqual(registered, len(manifest["items"]))
@@ -314,6 +332,38 @@ class TestUploadGatePassTestOnly(LoopBase):
         self.assertEqual(
             loop_report["registered_asset_count"], len(manifest["items"])
         )
+
+        # TEST ONLY 노트가 등록 후에도 보존된다 (덮어쓰지 않고 덧붙임)
+        reloaded = self.loop.intake.load_asset_intake_manifest(self.project_path)
+        for item in reloaded["items"]:
+            self.assertTrue(
+                item["notes"].startswith("TEST ONLY placeholder — not real media; ")
+            )
+
+        # TEST ONLY 마커 — 스크립트 헬퍼 경로로 보고서에 기록된다
+        sim_report_path = mark_reports_test_only(
+            self.project_path,
+            placeholder_count=len(manifest["items"]),
+            upload_ready=True,
+        )
+        self.assertTrue(sim_report_path.is_file())
+        sim_report = load_json(sim_report_path)
+        self.assertEqual(sim_report_path.name, SIM_REPORT_FILE)
+        self.assertTrue(sim_report["test_only_simulation"])
+        self.assertEqual(
+            sim_report["placeholder_files_created"], len(manifest["items"])
+        )
+        self.assertTrue(sim_report["upload_ready_result"])
+        self.assertIn("Do not upload", sim_report["warning"])
+        for rel in (
+            "reports/final_quality_report.json",
+            "reports/final_upload_gate.json",
+            "reports/manual_production_loop_report.json",
+        ):
+            marked = load_json(self.project_path / rel)
+            self.assertTrue(marked["test_only_simulation"], rel)
+            self.assertFalse(marked["real_media_verified"], rel)
+            self.assertIn("Do not upload", marked["test_only_warning"])
 
 
 class TestZRepoUntouched(unittest.TestCase):

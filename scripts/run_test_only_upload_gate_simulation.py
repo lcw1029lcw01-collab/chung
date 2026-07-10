@@ -11,16 +11,59 @@ placeholder는 실제 미디어가 아니며, 이 결과는 실제 제작 준비
 실행: 프로젝트 루트에서  python scripts/run_test_only_upload_gate_simulation.py
 """
 import sys
+from datetime import datetime, timezone
 from pathlib import Path
 
 PROJECT_ROOT = Path(__file__).resolve().parent.parent
 sys.path.insert(0, str(PROJECT_ROOT))
 
-from core import write_text  # noqa: E402
+from core import load_json, write_json, write_text  # noqa: E402
 from engines.manual_production import ManualProductionLoop  # noqa: E402
 from engines.pipeline import FullPipelineRunner  # noqa: E402
 
 PLACEHOLDER_TEXT = "TEST ONLY placeholder. Not real media. Do not upload.\n"
+
+TEST_ONLY_WARNING = (
+    "TEST ONLY simulation using placeholder files. "
+    "Not real production readiness. Do not upload."
+)
+
+SIM_REPORT_FILE = "test_only_upload_gate_simulation_report.json"
+
+# TEST ONLY 마커를 심을 보고서들 (존재하는 것만 갱신)
+_REPORTS_TO_MARK = [
+    "reports/final_quality_report.json",
+    "reports/final_upload_gate.json",
+    "reports/manual_production_loop_report.json",
+]
+
+
+def mark_reports_test_only(
+    project_path: str | Path, placeholder_count: int, upload_ready: bool
+) -> Path:
+    """생성된 보고서에 TEST ONLY 마커를 남기고 시뮬레이션 보고서를 만든다."""
+    project_path = Path(project_path)
+    for rel in _REPORTS_TO_MARK:
+        path = project_path / rel
+        if not path.is_file():
+            continue
+        report = load_json(path)
+        report["test_only_simulation"] = True
+        report["test_only_warning"] = TEST_ONLY_WARNING
+        report["real_media_verified"] = False
+        write_json(path, report)
+
+    project = load_json(project_path / "project.json")
+    sim_report_path = project_path / "reports" / SIM_REPORT_FILE
+    write_json(sim_report_path, {
+        "project_id": project["project_id"],
+        "test_only_simulation": True,
+        "placeholder_files_created": placeholder_count,
+        "upload_ready_result": upload_ready,
+        "warning": TEST_ONLY_WARNING,
+        "created_at": datetime.now(timezone.utc).isoformat(),
+    })
+    return sim_report_path
 
 BANNER = """
 ============================================================
@@ -61,9 +104,16 @@ def main() -> int:
     upload_ready = loop.rerun_final_readiness(project_path)
     report = loop.create_manual_loop_report(project_path)
 
+    # 3) 생성된 보고서에 TEST ONLY 마커 기록 + 시뮬레이션 보고서 생성
+    sim_report_path = mark_reports_test_only(
+        project_path, placeholder_count=len(manifest["items"]),
+        upload_ready=upload_ready,
+    )
+
     print(f"project_id                  : {summary['project_id']}")
     print(f"registered placeholder count: {registered}")
     print(f"blockers                    : {report['blockers']}")
+    print(f"simulation report           : {sim_report_path}")
     print(f"upload_ready (TEST ONLY)    : {upload_ready}")
     print()
     print("이 결과는 게이트 로직 증명용이며, 실제 제작 준비 완료가 아니다.")
