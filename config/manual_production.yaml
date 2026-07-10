@@ -1,0 +1,17 @@
+# 수동 제작 루프 설정 (v0.2)
+# 근거: docs/33_MANUAL_PRODUCTION_LOOP_V0_2.md
+# 주의: API 키/secret을 이 파일에 절대 두지 않는다.
+
+manual_workspace_root: manual_assets
+allow_file_copy: false
+allow_upload: false
+require_human_review: true
+require_real_final_video: true
+
+supported_asset_types:
+  - image
+  - motion
+  - audio
+  - subtitle
+  - video
+  - thumbnail

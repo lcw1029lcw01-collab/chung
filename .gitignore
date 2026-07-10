@@ -33,6 +33,9 @@ outputs/*
 channels/*
 projects/*
 
+# Manual assets (v0.2) — 사람이 배치한 외부 생성 자산, 커밋하지 않는다
+manual_assets/
+
 # Temp
 *.tmp
 

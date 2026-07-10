@@ -50,6 +50,26 @@ python scripts/run_manual_asset_registration_demo.py
 python scripts/run_provider_integration_prep_demo.py
 ```
 
+## v0.2 수동 제작 루프
+
+```bash
+# 수동 제작 루프 데모 — 수동 워크스페이스(manual_assets/{project_id}/, gitignore 대상)와
+# asset intake manifest를 만들고 최종 준비도를 재실행한다.
+# 실물 파일 배치·검토 승인이 없으므로 upload_ready는 **false가 정상**이다.
+python scripts/run_manual_production_loop_demo.py
+
+# 수동 검토 데모 — 사람 검토 체크포인트 전체를 명시적으로 승인한다.
+# **검토 승인만으로는 부족하다**: 실물 자산·최종 영상이 없으므로
+# upload_ready는 여전히 false다.
+python scripts/run_manual_review_demo.py
+
+# ⚠️ TEST ONLY 업로드 게이트 시뮬레이션 — gitignore된 manual_assets/ 안에
+# 아주 작은 **가짜 placeholder 파일**을 만들어 게이트 로직만 증명한다.
+# 결과가 upload_ready true여도 실제 제작 준비 완료가 절대 아니며,
+# placeholder를 실제 미디어로 취급하거나 업로드에 사용하면 안 된다.
+python scripts/run_test_only_upload_gate_simulation.py
+```
+
 ## 단계별 데모 (디버깅용)
 
 아래 스크립트들은 파이프라인의 **특정 구간만 따로 돌려볼 때** 유용하다.
