@@ -70,6 +70,26 @@ python scripts/run_manual_review_demo.py
 python scripts/run_test_only_upload_gate_simulation.py
 ```
 
+## v0.3 실제 수동 트라이얼
+
+첫 실제 파일 기반 수동 제작 트라이얼 흐름. **어느 단계도 업로드하지 않는다.**
+
+```bash
+# 1) 준비 — 트라이얼 가이드(기대 파일명·배치 경로)·체크리스트·워크스페이스·
+#    export pack을 생성한다. 이후 사람이 직접 파일을 만들어 배치해야 한다.
+python scripts/run_real_manual_trial_prepare.py
+
+# 2) 검증 — 사람이 배치한 파일을 존재/확장자/최소 크기로만 검사한다
+#    (미디어 내용 검사 없음). 파일 미비·검토 미승인이면 upload_ready false.
+python scripts/run_real_manual_trial_validate.py {project_path}
+
+# 3) 최종화 — 게이트·수동 업로드 패키지를 재생성한다. 업로드는 수행하지 않으며,
+#    사람이 manual_upload_instructions에 따라 직접 업로드한다.
+python scripts/run_real_manual_trial_finalize.py {project_path}
+```
+
+validate/finalize는 project_path 인자가 없으면 사용법만 출력한다.
+
 ## 단계별 데모 (디버깅용)
 
 아래 스크립트들은 파이프라인의 **특정 구간만 따로 돌려볼 때** 유용하다.

@@ -1,0 +1,23 @@
+# 자산 파일 검증 설정 (v0.3)
+# 근거: docs/34_REAL_MANUAL_TRIAL_V0_3.md
+# 주의: 존재/확장자/크기 검사만 한다. 미디어 내용 검사·업로드·외부 호출 없음.
+# API 키/secret을 이 파일에 절대 두지 않는다.
+
+allow_upload: false
+allow_external_calls: false
+
+minimum_file_sizes:
+  image: 1024
+  motion: 1024
+  audio: 1024
+  subtitle: 1
+  video: 1024
+  thumbnail: 1024
+
+allowed_extensions:
+  image: [".png", ".jpg", ".jpeg", ".webp"]
+  motion: [".mp4", ".mov", ".webm"]
+  audio: [".mp3", ".wav", ".m4a"]
+  subtitle: [".srt", ".vtt", ".json"]
+  video: [".mp4", ".mov"]
+  thumbnail: [".png", ".jpg", ".jpeg", ".webp"]
