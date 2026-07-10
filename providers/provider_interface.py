@@ -52,9 +52,23 @@ class PlaceholderProvider(ProviderInterface):
 
     mode = "placeholder"
     not_implemented_reason = "Provider API integration not implemented."
+    manual_instructions: list = []
 
     def __init__(self):
         self._job_counter = 0
+
+    def supports_manual_mode(self) -> bool:
+        """v0.2 수동 통합 워크플로우 지원 여부 (docs/32)."""
+        return True
+
+    def get_manual_instructions(self) -> dict:
+        return {
+            "provider_name": self.provider_name,
+            "provider_type": self.provider_type,
+            "mode": "manual",
+            "external_call_made": False,
+            "instructions": list(self.manual_instructions),
+        }
 
     def validate_config(self) -> dict:
         return {

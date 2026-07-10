@@ -1,0 +1,23 @@
+# Provider 모드 설정 (v0.2)
+# 근거: docs/32_PROVIDER_INTEGRATION_V0_2.md
+# 주의: API 키/secret을 이 파일에 절대 두지 않는다.
+
+default_mode: manual
+allow_external_calls: false
+allow_uploads: false
+
+providers:
+  midjourney:
+    enabled: true
+    mode: manual
+    external_calls_allowed: false
+
+  midjourney_video:
+    enabled: true
+    mode: manual
+    external_calls_allowed: false
+
+  typecast:
+    enabled: true
+    mode: manual
+    external_calls_allowed: false

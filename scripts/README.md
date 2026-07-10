@@ -43,6 +43,11 @@ python scripts/run_provider_placeholder_demo.py
 
 # 수동 자산 등록 데모 — placeholder 경로 메타데이터만 등록 (파일 복사 없음)
 python scripts/run_manual_asset_registration_demo.py
+
+# v0.2 Provider 통합 준비 데모 — 수동 작업용 export pack(MJ/MJ Video/Typecast) 생성,
+# provider job 추적, 외부 생성 자산 메타데이터 import + AssetRegistry 연결까지.
+# 여전히 외부 API를 호출하지 않으며, upload_ready는 false를 유지한다.
+python scripts/run_provider_integration_prep_demo.py
 ```
 
 ## 단계별 데모 (디버깅용)
