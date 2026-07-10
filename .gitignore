@@ -36,6 +36,9 @@ projects/*
 # Manual assets (v0.2) — 사람이 배치한 외부 생성 자산, 커밋하지 않는다
 manual_assets/
 
+# 완성 영상 보관함 — 채널별 최종 산출물(대용량), 커밋하지 않는다
+완성영상/
+
 # Temp
 *.tmp
 
