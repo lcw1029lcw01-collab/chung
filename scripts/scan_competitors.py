@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 """경쟁 채널 스캔 — yt-dlp로 채널별 최근 영상을 전수 추출해 신호를 뽑는다.
 
-API 키 불필요. 채널당 `yt-dlp --flat-playlist -J {url}/videos` 1회 실행.
+API 키 불필요. 채널당 `yt-dlp -I 1:{N} -J {url}/videos` 1회 실행 — 조회수·업로드일 포함 전체 메타.
 출력: report.json(채널 요약 + HIGH 신호 랭킹) + report.csv + raw_{슬러그}.json.
 
 실행: 프로젝트 루트에서
@@ -50,10 +50,9 @@ def videos_url(url: str) -> str:
     return url if url.endswith("/videos") else url + "/videos"
 
 
-def run_yt_dlp(url: str) -> dict:
+def run_yt_dlp(url: str, recent_n: int) -> dict:
     cmd = [
-        "yt-dlp", "--flat-playlist", "-J",
-        "--extractor-args", "youtubetab:approximate_date",
+        "yt-dlp", "-I", f"1:{recent_n}", "-J",
         videos_url(url),
     ]
     result = subprocess.run(
@@ -79,7 +78,12 @@ def parse_args(argv: list[str]) -> dict | None:
         elif arg == "--recent-n":
             if i + 1 >= len(argv):
                 return None
-            recent_n = int(argv[i + 1])
+            try:
+                recent_n = int(argv[i + 1])
+            except ValueError:
+                return None
+            if recent_n < 1:
+                return None
             i += 1
         else:
             urls.append(arg)
@@ -109,20 +113,33 @@ def main(argv: list[str] | None = None) -> int:
 
     analyses = []
     failed = []
+    used_slugs = set()
     for url in args["urls"]:
+        print(f"⏳ 추출 중 (최근 {args['recent_n']}편, 채널당 1~2분): {url}")
         try:
-            raw = run_yt_dlp(url)
+            raw = run_yt_dlp(url, args["recent_n"])
+            parsed = parse_flat_playlist(raw)
+            if not parsed["videos"]:
+                print(f"⚠️ 영상 메타를 얻지 못함, 건너뜀: {url} (yt-dlp 업데이트 필요할 수 있음: pip install -U yt-dlp)")
+                failed.append({"url": url, "error": "no_videos_extracted"})
+                continue
+            slug = slugify(parsed["channel_name"])
+            if slug in used_slugs:
+                suffix = 2
+                while f"{slug}-{suffix}" in used_slugs:
+                    suffix += 1
+                slug = f"{slug}-{suffix}"
+            used_slugs.add(slug)
+            write_json(out_dir / f"raw_{slug}.json", raw)
+            analyses.append(analyze_channel(parsed, recent_n=args["recent_n"]))
+            print(f"✅ {parsed['channel_name']}: {len(parsed['videos'])}편 추출")
         except FileNotFoundError:
             print("yt-dlp가 설치되어 있지 않습니다. 설치: pip install yt-dlp")
             return 1
-        except (RuntimeError, json.JSONDecodeError) as exc:
+        except Exception as exc:
             print(f"⚠️ 추출 실패, 건너뜀: {url}\n   {exc}")
             failed.append({"url": url, "error": str(exc)})
             continue
-        parsed = parse_flat_playlist(raw)
-        write_json(out_dir / f"raw_{slugify(parsed['channel_name'])}.json", raw)
-        analyses.append(analyze_channel(parsed, recent_n=args["recent_n"]))
-        print(f"✅ {parsed['channel_name']}: {len(parsed['videos'])}편 추출")
 
     if not analyses:
         print("분석할 채널이 없습니다.")
