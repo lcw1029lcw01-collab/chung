@@ -14,6 +14,8 @@ from engines.composition.subtitle_translation import (  # noqa: E402
     assemble_srt,
     build_translation_job,
     format_srt_timestamp,
+    validate_translated_srt,
+    validate_translation_job,
 )
 
 CUES = [
@@ -78,6 +80,74 @@ class TestAssembleSrt(unittest.TestCase):
             "2\n00:00:04,200 --> 00:00:09,870\nThis is the record of that choice.",
         )
         self.assertTrue(srt.endswith("\n"))
+
+
+class TestValidateTranslationJob(unittest.TestCase):
+    def test_untranslated_cues_listed(self):
+        job = build_translation_job(CUES, ["en", "ja"])
+        job["cues"][0]["translations"]["en"] = "filled"
+        report = validate_translation_job(job)
+        self.assertEqual(report["status"], "FAIL")
+        self.assertIn("en_untranslated_cues:[2]", report["issues"])
+        self.assertIn("ja_untranslated_cues:[1, 2]", report["issues"])
+
+    def test_complete_job_passes(self):
+        job = build_translation_job(CUES, ["en"])
+        for cue in job["cues"]:
+            cue["translations"]["en"] = "ok"
+        self.assertEqual(validate_translation_job(job)["status"], "PASS")
+
+
+class TestValidateTranslatedSrt(unittest.TestCase):
+    def translated(self, texts: list[str]) -> list[dict]:
+        return [
+            {"index": i + 1, "start_seconds": c["start_seconds"],
+             "end_seconds": c["end_seconds"], "text": t}
+            for i, (c, t) in enumerate(zip(CUES, texts))
+        ]
+
+    def test_pass_case(self):
+        report = validate_translated_srt(
+            CUES, self.translated(["In 2100...", "This is the record."]), "en")
+        self.assertEqual(report["status"], "PASS")
+        self.assertEqual(report["cue_count"], 2)
+
+    def test_cue_count_mismatch(self):
+        report = validate_translated_srt(CUES, self.translated(["only one"])[:1], "en")
+        self.assertIn("cue_count_mismatch:2!=1", report["issues"])
+
+    def test_timecode_drift_detected(self):
+        cues = self.translated(["a", "b"])
+        cues[1]["start_seconds"] += 0.05
+        report = validate_translated_srt(CUES, cues, "en")
+        self.assertIn("cue_2_timecode_mismatch", report["issues"])
+
+    def test_empty_text_and_hangul_remains(self):
+        report = validate_translated_srt(CUES, self.translated(["", "번역 안 됨"]), "en")
+        self.assertIn("cue_1_empty_text", report["issues"])
+        self.assertIn("cue_2_hangul_remains", report["issues"])
+
+    def test_hangul_allowed_for_ko(self):
+        report = validate_translated_srt(CUES, self.translated(["가나", "다라"]), "ko")
+        self.assertEqual(report["status"], "PASS")
+
+
+class TestRoundTrip(unittest.TestCase):
+    def test_job_to_srt_to_parse_to_validate(self):
+        import tempfile
+
+        from engines.composition import VideoComposer
+
+        job = build_translation_job(CUES, ["en"])
+        job["cues"][0]["translations"]["en"] = "In 2100, humanity stood at a crossroads."
+        job["cues"][1]["translations"]["en"] = "This is the record of that choice."
+        srt_text = assemble_srt(job, "en")
+        with tempfile.TemporaryDirectory() as tmp:
+            path = Path(tmp) / "subtitles_en.srt"
+            path.write_text(srt_text, encoding="utf-8")
+            parsed = VideoComposer().parse_srt(path)
+        report = validate_translated_srt(CUES, parsed, "en")
+        self.assertEqual(report["status"], "PASS", report["issues"])
 
 
 if __name__ == "__main__":

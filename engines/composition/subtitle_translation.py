@@ -85,3 +85,49 @@ def assemble_srt(job: dict, lang: str) -> str:
         end = format_srt_timestamp(cue["end_seconds"])
         blocks.append(f"{i}\n{start} --> {end}\n{text}")
     return "\n\n".join(blocks) + "\n"
+
+
+def validate_translation_job(job: dict, langs: list[str] | None = None) -> dict:
+    """잡의 번역 완결성을 검사한다 — 미번역 큐 인덱스를 언어별로 나열."""
+    langs = langs if langs is not None else job.get("target_languages", [])
+    issues = []
+    if not job.get("cues"):
+        issues.append("no_cues")
+    for lang in langs:
+        missing = [
+            cue["index"] for cue in job.get("cues", [])
+            if not (cue.get("translations", {}).get(lang) or "").strip()
+        ]
+        if missing:
+            issues.append(f"{lang}_untranslated_cues:{missing}")
+    return {"issues": issues, "status": "PASS" if not issues else "FAIL"}
+
+
+def validate_translated_srt(
+    source_cues: list[dict], translated_cues: list[dict], lang: str
+) -> dict:
+    """번역 SRT(파싱된 큐)를 원본 큐와 대조한다.
+
+    검사: 큐 수 일치, 타임코드 완전 동일(ms 단위 비교), 빈 텍스트 없음,
+    비한국어 언어에 한글 잔존 없음.
+    """
+    issues = []
+    if len(source_cues) != len(translated_cues):
+        issues.append(f"cue_count_mismatch:{len(source_cues)}!={len(translated_cues)}")
+    for src, dst in zip(source_cues, translated_cues):
+        same_time = (
+            format_srt_timestamp(src["start_seconds"]) == format_srt_timestamp(dst["start_seconds"])
+            and format_srt_timestamp(src["end_seconds"]) == format_srt_timestamp(dst["end_seconds"])
+        )
+        if not same_time:
+            issues.append(f"cue_{dst['index']}_timecode_mismatch")
+        if not str(dst.get("text", "")).strip():
+            issues.append(f"cue_{dst['index']}_empty_text")
+        elif lang != "ko" and HANGUL_RE.search(dst["text"]):
+            issues.append(f"cue_{dst['index']}_hangul_remains")
+    return {
+        "lang": lang,
+        "cue_count": len(translated_cues),
+        "issues": issues,
+        "status": "PASS" if not issues else "FAIL",
+    }
