@@ -70,3 +70,58 @@ def analyze_channel(parsed: dict, recent_n: int = 25) -> dict:
         "median_views": med,
         "videos": analyzed,
     }
+
+
+CSV_COLUMNS = [
+    "channel", "title", "url", "view_count",
+    "multiple_vs_median", "multiple_vs_avg", "signal",
+    "upload_date", "duration_seconds",
+]
+
+
+def build_report(analyses: list[dict]) -> dict:
+    """채널별 요약(전 영상 포함) + 전 채널 HIGH 신호 랭킹(중앙값 배수 내림차순)."""
+    signals = [
+        {**video, "channel_name": analysis["channel_name"]}
+        for analysis in analyses
+        for video in analysis["videos"]
+        if video["signal"] == "HIGH"
+    ]
+    signals.sort(key=lambda video: video["multiple_vs_median"], reverse=True)
+    return {
+        "channel_count": len(analyses),
+        "channels": [
+            {
+                "channel_name": analysis["channel_name"],
+                "channel_url": analysis["channel_url"],
+                "video_count_scanned": analysis["video_count_scanned"],
+                "skipped_count": analysis["skipped_count"],
+                "avg_views": analysis["avg_views"],
+                "median_views": analysis["median_views"],
+                "high_signal_count": sum(
+                    1 for video in analysis["videos"] if video["signal"] == "HIGH"
+                ),
+                "videos": analysis["videos"],
+            }
+            for analysis in analyses
+        ],
+        "high_signals": signals,
+    }
+
+
+def report_to_csv_rows(report: dict) -> list[list]:
+    """CSV 저장용 평탄화 — 헤더 + 전 채널 전 영상(중앙값 배수 내림차순)."""
+    rows: list[list] = [list(CSV_COLUMNS)]
+    pairs = [
+        (channel["channel_name"], video)
+        for channel in report["channels"]
+        for video in channel["videos"]
+    ]
+    pairs.sort(key=lambda pair: pair[1]["multiple_vs_median"], reverse=True)
+    for channel_name, video in pairs:
+        rows.append([
+            channel_name, video["title"], video["url"], video["view_count"],
+            video["multiple_vs_median"], video["multiple_vs_avg"], video["signal"],
+            video.get("upload_date") or "", video.get("duration_seconds") or "",
+        ])
+    return rows
