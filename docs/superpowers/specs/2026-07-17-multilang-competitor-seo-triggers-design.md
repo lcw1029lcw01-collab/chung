@@ -130,7 +130,11 @@ subtitles/subtitles_ko.srt (문장 단위 나레이션 큐, 리플로우 전)
 - 입력: `python scripts/scan_competitors.py <channel_url> [<channel_url> ...] [--channel <id>] [--recent-n 25]`
   - URL 인자가 없고 `--channel`이 있으면 `channels/<id>/competitors.yaml`의
     `competitors: [{name, url}]` 목록을 사용.
-- 실행: 채널당 `yt-dlp --flat-playlist --extractor-args "youtubetab:approximate_date" -J <url>/videos`.
+- 실행: 채널당 `yt-dlp -I 1:{recent_n} -J <url>/videos` (범위 지정 전체 메타 추출).
+  - 구현 중 변경(2026-07-17): 원래 `--flat-playlist` 방식이었으나, 현행 yt-dlp(2026.06)의
+    flat 채널 탭 엔트리는 view_count가 전부 null로 확인되어 범위 전체 추출로 전환.
+    조회수·정확한 업로드일을 얻는 대신 채널당 추출이 느리다(영상당 약 4초).
+  - 영상 0편 추출은 성공이 아니라 채널 실패로 기록한다 (`failed_channels`).
 - 출력: `channels/<id>/research/competitor_scan_YYYYMMDD/` (channel 미지정 시 cwd 하위)
   - `raw_<채널슬러그>.json` (재분석용 원본), `report.json`, `report.csv`.
 - 에러 처리: yt-dlp 미설치 → 설치 안내와 함께 실패. 개별 채널 추출 실패 → 경고 후 나머지 계속,
@@ -138,8 +142,9 @@ subtitles/subtitles_ko.srt (문장 단위 나레이션 큐, 리플로우 전)
 
 ### 한계 (문서화)
 
-- flat 모드의 `upload_date`는 근사치다(approximate_date). 배수 계산에는 충분하며,
-  정밀 날짜가 필요해지면 개별 영상 메타 조회(느린 경로)를 나중에 추가한다.
+- 범위 전체 추출은 영상당 약 4초가 걸린다 — 채널당 최근 25편 기준 1~2분.
+  research 배치 도구 특성상 허용하며, 더 빠른 경로가 필요해지면 flat 추출이
+  view_count를 다시 제공하는지 재확인 후 fast path를 추가한다.
 
 ---
 
@@ -177,6 +182,8 @@ triggers:
   `(1축 첫 템플릿 vs 2축 첫), (3축 첫 vs 4축 첫), (5축 첫 vs 1축 둘째)`.
 - `seo_mode: "formula_v2_triggers"`로 갱신.
 - 검증 갱신: 5축 전부 존재, 축당 ko/en 각 ≥3, 총 ≥20(언어별), 태그 값이 5축 안에 있는지.
+- config 내용 오류는 raw KeyError가 아니라 `ADOSValidationError`로 승격한다 —
+  축당 개수 부족은 로더(load 시점)에서, 템플릿 변수 오타는 포맷 시점 헬퍼에서 잡는다.
 - 다운스트림 소비처(`title_candidates_*` 등 참조하는 코드·테스트)를 grep해서 함께 수정.
 
 ---
