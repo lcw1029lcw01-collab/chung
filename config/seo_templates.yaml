@@ -1,0 +1,80 @@
+# SEO 제목·썸네일 템플릿 — 5대 심리 트리거 축.
+# 출처: 썸네일 170개 → 5대 심리 카테고리 압축(비블 강연) + 기존 formula_v1 템플릿 재배치.
+# 원칙: 다큐 채널 신뢰성 유지 — 과장·허위형 카피 금지, 축의 심리만 차용한다.
+# 변수: {topic} {topic_en} {year}
+triggers:
+  loss_fear:            # 금기, 놓침, 기간 한정
+    label: "손실·공포"
+    ko_titles:
+      - "{topic} — 지금 모르면 늦는 이야기"
+      - "인류가 외면해온 진실: {topic}"
+      - "{year}년, 준비되지 않은 인류에게 벌어질 일 | {topic}"
+      - "{topic} — 우리가 잃게 될 것들"
+    en_titles:
+      - "{topic_en} — The Story We Can't Afford to Ignore"
+      - "The Truth Humanity Keeps Avoiding: {topic_en}"
+      - "What Happens to an Unprepared Humanity in {year} | {topic_en}"
+      - "{topic_en} — What We Stand to Lose"
+    thumbnail_texts:
+      - "모르면 늦는다"
+      - "우리가 잃게 될 것"
+  curiosity_gap:        # 미공개, 반전
+    label: "호기심·은폐"
+    ko_titles:
+      - "{topic} — 교과서에 없는 이야기"
+      - "아무도 말하지 않는 {topic}의 반전"
+      - "{topic}, 결말은 예상과 다르다"
+      - "과학자들도 의견이 갈리는 질문: {topic}"
+    en_titles:
+      - "{topic_en} — The Story Textbooks Left Out"
+      - "The Twist Nobody Talks About: {topic_en}"
+      - "{topic_en} — The Ending Isn't What You Expect"
+      - "The Question That Divides Scientists: {topic_en}"
+    thumbnail_texts:
+      - "교과서에 없는 이야기"
+      - "결말이 다르다"
+  authority_proof:      # 내부자 목격, 수치·데이터
+    label: "권위·증거"
+    ko_titles:
+      - "{topic} — 과학이 예측한 미래"
+      - "{topic}: 데이터가 가리키는 세 가지 시나리오"
+      - "미래 인류 보고서 — {topic}"
+      - "과학이 그리는 {year}년 | {topic}"
+    en_titles:
+      - "{topic_en} — What Scientists Predict"
+      - "{topic_en}: Three Scenarios the Data Points To"
+      - "Future Humanity Report — {topic_en}"
+      - "Science Predicts {year} | {topic_en}"
+    thumbnail_texts:
+      - "과학자들의 대답"
+      - "데이터가 가리키는 미래"
+  efficiency_gain:      # 시간 확보, 압축
+    label: "효율·이득"
+    ko_titles:
+      - "{topic}, 25분 만에 이해하기"
+      - "{topic} — 핵심만 담은 미래 보고서"
+      - "이 영상 하나로 정리되는 {topic}"
+      - "{topic}: 100년의 변화를 한 편에"
+    en_titles:
+      - "{topic_en}, Explained in 25 Minutes"
+      - "{topic_en} — The Essential Future Report"
+      - "{topic_en}, All in One Documentary"
+      - "{topic_en}: A Century of Change in One Film"
+    thumbnail_texts:
+      - "한 편으로 정리"
+      - "25분 완전 정리"
+  desire_identity:      # 변신, 특별함
+    label: "욕망·정체성"
+    ko_titles:
+      - "{topic} — 당신의 후손 이야기"
+      - "인류의 다음 챕터: {topic}"
+      - "{topic} | 진화는 멈추지 않는다"
+      - "우리는 어떤 존재가 될까 — {topic}"
+    en_titles:
+      - "{topic_en} — The Story of Your Descendants"
+      - "Humanity's Next Chapter: {topic_en}"
+      - "{topic_en} | Evolution Never Stops"
+      - "What Will We Become — {topic_en}"
+    thumbnail_texts:
+      - "인류의 다음 모습"
+      - "당신의 후손"
