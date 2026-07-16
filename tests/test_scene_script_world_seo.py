@@ -19,6 +19,7 @@ from core import (  # noqa: E402
     ADOSValidationError,
     load_json,
     write_json,
+    write_yaml,
 )
 from engines.channel import ChannelEngine  # noqa: E402
 from engines.direction import DirectionEngine  # noqa: E402
@@ -275,6 +276,14 @@ class TestSEOEngine(SceneBase):
         for ab_set in sets:
             self.assertNotEqual(ab_set["a"]["trigger"], ab_set["b"]["trigger"])
             self.assertTrue(ab_set["a"]["text"] and ab_set["b"]["text"])
+        expected_pairs = [
+            (TRIGGER_AXES[0], TRIGGER_AXES[1]),
+            (TRIGGER_AXES[2], TRIGGER_AXES[3]),
+            (TRIGGER_AXES[4], TRIGGER_AXES[0]),
+        ]
+        for ab_set, (axis_a, axis_b) in zip(sets, expected_pairs):
+            self.assertEqual(ab_set["a"]["trigger"], axis_a)
+            self.assertEqual(ab_set["b"]["trigger"], axis_b)
 
     def test_seo_without_scene_script_has_minimal_chapters(self):
         run_until_direction(self.project_path)
@@ -295,6 +304,25 @@ class TestSEOEngine(SceneBase):
         (self.root / "config" / "seo_templates.yaml").unlink()
         with self.assertRaises(ADOSFileNotFoundError):
             load_seo_templates(self.project_path)
+
+    def test_load_seo_templates_rejects_thin_axis(self):
+        import copy
+        triggers = load_seo_templates(self.project_path)
+        thin = copy.deepcopy(triggers)
+        thin["loss_fear"]["ko_titles"] = thin["loss_fear"]["ko_titles"][:2]
+        write_yaml(self.root / "config" / "seo_templates.yaml", {"triggers": thin})
+        with self.assertRaises(ADOSValidationError):
+            load_seo_templates(self.project_path)
+
+    def test_template_variable_typo_raises_validation_error(self):
+        import copy
+        triggers = load_seo_templates(self.project_path)
+        broken = copy.deepcopy(triggers)
+        broken["loss_fear"]["ko_titles"][0] = "{unknown_var} 제목"
+        write_yaml(self.root / "config" / "seo_templates.yaml", {"triggers": broken})
+        run_until_direction(self.project_path)
+        with self.assertRaises(ADOSValidationError):
+            SEOEngine().create_seo_package(self.project_path)
 
 
 class TestSceneLayerReviewRegressions(SceneBase):

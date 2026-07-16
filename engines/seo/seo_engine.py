@@ -54,7 +54,31 @@ def load_seo_templates(start: str | Path | None = None) -> dict:
             location="load_seo_templates",
             suggested_fix="5축을 모두 채우세요: " + ", ".join(TRIGGER_AXES),
         )
+    for axis in TRIGGER_AXES:
+        entry = triggers[axis] or {}
+        ko_titles = entry.get("ko_titles") or []
+        en_titles = entry.get("en_titles") or []
+        thumbnails = entry.get("thumbnail_texts") or []
+        if len(ko_titles) < 3 or len(en_titles) < 3 or not thumbnails:
+            raise ADOSValidationError(
+                f"SEO 템플릿 {axis} 축이 부족합니다: "
+                f"ko {len(ko_titles)}개 / en {len(en_titles)}개 / thumbnail {len(thumbnails)}개",
+                location="load_seo_templates",
+                suggested_fix="축당 ko/en 제목 3개 이상, 썸네일 문구 1개 이상을 채우세요.",
+            )
     return triggers
+
+
+def _format_template(template: str, axis: str, **values) -> str:
+    """템플릿 변수를 치환한다 — 모르는 변수는 config 오류로 승격."""
+    try:
+        return template.format(**values)
+    except (KeyError, IndexError) as exc:
+        raise ADOSValidationError(
+            f"SEO 템플릿 변수 오류 ({axis}): {template}",
+            location="SEOEngine.create_seo_package",
+            suggested_fix=f"사용 가능한 변수만 쓰세요: {sorted(values)} (원인: {exc})",
+        )
 
 
 def _build_ab_test_sets(title_candidates: list[dict]) -> list[dict]:
@@ -172,17 +196,17 @@ class SEOEngine:
 
         triggers = load_seo_templates(project_path)
         title_candidates_ko = [
-            {"text": template.format(topic=topic, year=year), "trigger": axis}
+            {"text": _format_template(template, axis, topic=topic, year=year), "trigger": axis}
             for axis in TRIGGER_AXES
             for template in triggers[axis]["ko_titles"]
         ]
         title_candidates_en = [
-            {"text": template.format(topic_en=topic_en, year=year), "trigger": axis}
+            {"text": _format_template(template, axis, topic_en=topic_en, year=year), "trigger": axis}
             for axis in TRIGGER_AXES
             for template in triggers[axis]["en_titles"]
         ]
         thumbnail_candidates = [
-            {"text": template.format(topic=topic, year=year), "trigger": axis}
+            {"text": _format_template(template, axis, topic=topic, year=year), "trigger": axis}
             for axis in TRIGGER_AXES
             for template in triggers[axis]["thumbnail_texts"]
         ]
