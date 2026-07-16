@@ -253,11 +253,28 @@ class TestSEOEngine(SceneBase):
         engine = SEOEngine()
         package = engine.create_seo_package(self.project_path)
         self.assertTrue(engine.validate_seo_package(self.project_path))
+        self.assertEqual(package["seo_mode"], "formula_v2_triggers")
         self.assertEqual(len(package["title_candidates_ko"]), 20)
         self.assertEqual(len(package["title_candidates_en"]), 20)
+        for key in ("title_candidates_ko", "title_candidates_en"):
+            axes = {candidate["trigger"] for candidate in package[key]}
+            self.assertEqual(axes, set(TRIGGER_AXES))
+            for candidate in package[key]:
+                self.assertNotIn("{topic", candidate["text"])  # 변수 치환 완료
+        self.assertGreaterEqual(len(package["thumbnail_text_candidates"]), 5)
         self.assertGreaterEqual(len(package["tags"]), 10)
         self.assertGreaterEqual(len(package["chapters"]), 3)
         self.assertIn("[챕터]", package["description"])
+
+    def test_ab_test_sets_pair_different_axes(self):
+        run_until_direction(self.project_path)
+        package = SEOEngine().create_seo_package(self.project_path)
+        sets = package["ab_test_sets"]
+        self.assertEqual(len(sets), 3)
+        self.assertEqual([s["set_id"] for s in sets], ["AB1", "AB2", "AB3"])
+        for ab_set in sets:
+            self.assertNotEqual(ab_set["a"]["trigger"], ab_set["b"]["trigger"])
+            self.assertTrue(ab_set["a"]["text"] and ab_set["b"]["text"])
 
     def test_seo_without_scene_script_has_minimal_chapters(self):
         run_until_direction(self.project_path)

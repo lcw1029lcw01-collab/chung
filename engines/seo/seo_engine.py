@@ -57,6 +57,29 @@ def load_seo_templates(start: str | Path | None = None) -> dict:
     return triggers
 
 
+def _build_ab_test_sets(title_candidates: list[dict]) -> list[dict]:
+    """서로 다른 축끼리 짝지은 A/B 3세트 — 결정적 규칙 (스펙 #3).
+
+    (1축 첫 vs 2축 첫), (3축 첫 vs 4축 첫), (5축 첫 vs 1축 둘째).
+    """
+    first_by_axis: dict[str, dict] = {}
+    second_by_axis: dict[str, dict] = {}
+    for candidate in title_candidates:
+        axis = candidate["trigger"]
+        if axis not in first_by_axis:
+            first_by_axis[axis] = candidate
+        elif axis not in second_by_axis:
+            second_by_axis[axis] = candidate
+    pairs = [
+        (first_by_axis[TRIGGER_AXES[0]], first_by_axis[TRIGGER_AXES[1]]),
+        (first_by_axis[TRIGGER_AXES[2]], first_by_axis[TRIGGER_AXES[3]]),
+        (first_by_axis[TRIGGER_AXES[4]], second_by_axis[TRIGGER_AXES[0]]),
+    ]
+    return [
+        {"set_id": f"AB{i}", "a": a, "b": b} for i, (a, b) in enumerate(pairs, 1)
+    ]
+
+
 SEO_REQUIRED_FIELDS = [
     "project_id",
     "topic",
@@ -67,66 +90,13 @@ SEO_REQUIRED_FIELDS = [
     "chapters",
     "thumbnail_text_candidates",
     "pinned_comment",
+    "ab_test_sets",
     "created_at",
-]
-
-TITLE_TEMPLATES_KO = [
-    "{topic}",
-    "{topic} | 과학이 예측한 미래",
-    "{year}년, {topic}",
-    "{topic} — 과학자들의 대답",
-    "당신이 몰랐던 미래: {topic}",
-    "{topic} (미래 다큐멘터리)",
-    "만약 인류가 계속 진화한다면 | {topic}",
-    "{topic}: 세 가지 시나리오",
-    "미래 인류 보고서 — {topic}",
-    "{topic}, 지금 시작된 변화",
-    "과학이 그리는 {year}년 | {topic}",
-    "{topic} — 우리는 마지막 인류일까",
-    "인류의 다음 챕터: {topic}",
-    "{topic} | 진화는 멈추지 않는다",
-    "{year}년의 인류 — {topic}",
-    "{topic}: 넷플릭스급 미래 다큐",
-    "지구의 미래, 인간의 미래 | {topic}",
-    "{topic} — 당신의 후손 이야기",
-    "다가올 미래: {topic}",
-    "{topic} | 퓨처랩 다큐멘터리",
-]
-
-TITLE_TEMPLATES_EN = [
-    "{topic_en}",
-    "{topic_en} | A Science Documentary",
-    "The Year {year}: {topic_en}",
-    "{topic_en} — What Scientists Predict",
-    "The Future You Never Imagined: {topic_en}",
-    "{topic_en} (Future Documentary)",
-    "If Human Evolution Never Stops | {topic_en}",
-    "{topic_en}: Three Scenarios",
-    "Future Humanity Report — {topic_en}",
-    "{topic_en}, The Change Has Already Begun",
-    "Science Predicts {year} | {topic_en}",
-    "{topic_en} — Are We the Last Humans?",
-    "Humanity's Next Chapter: {topic_en}",
-    "{topic_en} | Evolution Never Stops",
-    "Humans in {year} — {topic_en}",
-    "{topic_en}: A Netflix-Grade Future Doc",
-    "The Future of Earth and Humanity | {topic_en}",
-    "{topic_en} — The Story of Your Descendants",
-    "The Coming Future: {topic_en}",
-    "{topic_en} | Future Lab Documentary",
 ]
 
 BASE_TAGS = [
     "미래", "다큐멘터리", "과학", "인류의 미래", "진화", "미래 기술",
     "future", "documentary", "science", "future of humanity", "evolution", "ai",
-]
-
-THUMBNAIL_TEMPLATES = [
-    "100만 년 후 인간",
-    "인류의 다음 모습",
-    "진화는 멈추지 않는다",
-    "우리는 마지막 인류일까",
-    "{year}년의 인간",
 ]
 
 
@@ -200,6 +170,23 @@ class SEOEngine:
             if anchor:
                 year = anchor["year"]
 
+        triggers = load_seo_templates(project_path)
+        title_candidates_ko = [
+            {"text": template.format(topic=topic, year=year), "trigger": axis}
+            for axis in TRIGGER_AXES
+            for template in triggers[axis]["ko_titles"]
+        ]
+        title_candidates_en = [
+            {"text": template.format(topic_en=topic_en, year=year), "trigger": axis}
+            for axis in TRIGGER_AXES
+            for template in triggers[axis]["en_titles"]
+        ]
+        thumbnail_candidates = [
+            {"text": template.format(topic=topic, year=year), "trigger": axis}
+            for axis in TRIGGER_AXES
+            for template in triggers[axis]["thumbnail_texts"]
+        ]
+
         chapters = self._build_chapters(project_path)
         chapter_lines = "\n".join(f"{chapter['timestamp']} {chapter['title']}" for chapter in chapters)
         description = (
@@ -215,23 +202,18 @@ class SEOEngine:
         package = {
             "project_id": project["project_id"],
             "topic": topic,
-            "seo_mode": "formula_v1",
-            "title_candidates_ko": [
-                template.format(topic=topic, year=year) for template in TITLE_TEMPLATES_KO
-            ],
-            "title_candidates_en": [
-                template.format(topic_en=topic_en, year=year) for template in TITLE_TEMPLATES_EN
-            ],
+            "seo_mode": "formula_v2_triggers",
+            "title_candidates_ko": title_candidates_ko,
+            "title_candidates_en": title_candidates_en,
             "description": description,
             "tags": tags,
             "chapters": chapters,
-            "thumbnail_text_candidates": [
-                template.format(year=year) for template in THUMBNAIL_TEMPLATES
-            ],
+            "thumbnail_text_candidates": thumbnail_candidates,
             "pinned_comment": (
                 "여러분은 100만 년 후 인간이 어떤 모습일 거라고 생각하시나요? "
                 "댓글로 여러분의 상상을 들려주세요. 다음 에피소드의 소재가 될 수 있습니다."
             ),
+            "ab_test_sets": _build_ab_test_sets(title_candidates_ko),
             "upload_notes": [
                 "제목은 후보 중 사람이 최종 선택한다 (A/B 테스트 권장)",
                 "AI 생성 콘텐츠 표시는 업로드 시 수동으로 체크한다",
@@ -262,12 +244,35 @@ class SEOEngine:
             package, SEO_REQUIRED_FIELDS, location="SEOEngine.validate_seo_package"
         )
         for key in ("title_candidates_ko", "title_candidates_en"):
-            if len(package[key]) < 20:
+            candidates = package[key]
+            if len(candidates) < 20:
                 raise ADOSValidationError(
-                    f"{key}가 20개 미만입니다: {len(package[key])}개",
+                    f"{key}가 20개 미만입니다: {len(candidates)}개",
                     location="SEOEngine.validate_seo_package",
-                    suggested_fix="제목 템플릿을 20개 이상 유지하세요.",
+                    suggested_fix="config/seo_templates.yaml의 축당 제목을 4개 이상 유지하세요.",
                 )
+            unknown = {c["trigger"] for c in candidates} - set(TRIGGER_AXES)
+            if unknown:
+                raise ADOSValidationError(
+                    f"{key}에 알 수 없는 트리거 축: {sorted(unknown)}",
+                    location="SEOEngine.validate_seo_package",
+                    suggested_fix="트리거는 5축 중 하나여야 합니다: " + ", ".join(TRIGGER_AXES),
+                )
+            for axis in TRIGGER_AXES:
+                count = sum(1 for c in candidates if c["trigger"] == axis)
+                if count < 3:
+                    raise ADOSValidationError(
+                        f"{key}의 {axis} 축 후보가 3개 미만입니다: {count}개",
+                        location="SEOEngine.validate_seo_package",
+                        suggested_fix="config/seo_templates.yaml에서 해당 축을 보강하세요.",
+                    )
+        ab_sets = package["ab_test_sets"]
+        if len(ab_sets) != 3 or any(s["a"]["trigger"] == s["b"]["trigger"] for s in ab_sets):
+            raise ADOSValidationError(
+                "ab_test_sets는 서로 다른 축끼리 짝지은 3세트여야 합니다.",
+                location="SEOEngine.validate_seo_package",
+                suggested_fix="create_seo_package를 다시 실행하세요.",
+            )
         if len(package["tags"]) < 10:
             raise ADOSValidationError(
                 f"태그가 10개 미만입니다: {len(package['tags'])}개",
