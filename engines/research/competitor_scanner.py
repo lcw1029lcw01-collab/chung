@@ -122,6 +122,7 @@ def report_to_csv_rows(report: dict) -> list[list]:
         rows.append([
             channel_name, video["title"], video["url"], video["view_count"],
             video["multiple_vs_median"], video["multiple_vs_avg"], video["signal"],
-            video.get("upload_date") or "", video.get("duration_seconds") or "",
+            video.get("upload_date") or "",
+            video["duration_seconds"] if video.get("duration_seconds") is not None else "",
         ])
     return rows

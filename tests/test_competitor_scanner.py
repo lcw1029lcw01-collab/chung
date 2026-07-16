@@ -124,6 +124,14 @@ class TestCsvRows(unittest.TestCase):
         v2_row = next(r for r in rows[1:] if r[1] == "영상 2")
         self.assertEqual(v2_row[7], "")
 
+    def test_zero_duration_preserved_not_blank(self):
+        raw = {"channel": "제로", "entries": [
+            {"id": "z1", "title": "영상 Z", "view_count": 100, "duration": 0},
+        ]}
+        report = build_report([analyze_channel(parse_flat_playlist(raw))])
+        rows = report_to_csv_rows(report)
+        self.assertEqual(rows[1][8], 0)
+
 
 if __name__ == "__main__":
     unittest.main(verbosity=2)
