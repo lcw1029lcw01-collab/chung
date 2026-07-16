@@ -171,6 +171,9 @@ class ManualTrialGuide:
              "description": "사람 검토 체크포인트 전체 승인", "done": False},
             {"checklist_id": f"CL{len(expected) + 3:03d}",
              "description": "finalize 스크립트 실행 후 업로드 패키지 확인", "done": False},
+            {"checklist_id": f"CL{len(expected) + 4:03d}",
+             "description": "유튜브 스튜디오 자막 탭에 다국어 SRT 업로드 (subtitles_en/ja.srt)",
+             "done": False},
         ]
         checklist = {
             "project_id": project["project_id"],

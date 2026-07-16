@@ -174,7 +174,7 @@ class TestPrepareTrial(TrialBase):
         checklist = load_json(
             ManualTrialGuide().checklist_path(self.project_path)
         )
-        self.assertEqual(len(checklist["items"]), len(files) + 3)
+        self.assertEqual(len(checklist["items"]), len(files) + 4)
 
     def test_guide_fallback_without_intake_manifest(self):
         intake_path = self.runner.loop.intake.manifest_path(self.project_path)
