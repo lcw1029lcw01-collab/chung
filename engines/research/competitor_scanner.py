@@ -1,5 +1,5 @@
 # -*- coding: utf-8 -*-
-"""경쟁 채널 스캐너 — yt-dlp flat-playlist 출력을 분석해 주제 신호를 뽑는다.
+"""경쟁 채널 스캐너 — yt-dlp `-J` 출력(flat-playlist 또는 `-I 1:N` 전체 추출)을 분석해 주제 신호를 뽑는다.
 
 핵심 신호: 채널 최근 N편의 중앙값 조회수 대비 배수(multiple_vs_median) ≥ 2.0
 → HIGH. 바이럴 1편이 평균을 왜곡하므로 중앙값이 기본이고 평균 배수는 병기한다.
@@ -13,7 +13,7 @@ SIGNAL_THRESHOLD = 2.0
 
 
 def parse_flat_playlist(raw: dict) -> dict:
-    """yt-dlp `-J --flat-playlist` 출력을 정규화한다.
+    """yt-dlp `-J` 출력(flat-playlist 또는 `-I 1:N` 전체 추출)을 정규화한다.
 
     view_count가 없는 항목(멤버십·예정·비공개)은 건너뛰고 skipped_count에 센다.
     """
@@ -29,7 +29,8 @@ def parse_flat_playlist(raw: dict) -> dict:
             {
                 "video_id": video_id,
                 "title": entry.get("title", ""),
-                "url": entry.get("url") or f"https://www.youtube.com/watch?v={video_id}",
+                "url": entry.get("webpage_url") or entry.get("url")
+                or f"https://www.youtube.com/watch?v={video_id}",
                 "view_count": int(entry["view_count"]),
                 "duration_seconds": entry.get("duration"),
                 "upload_date": entry.get("upload_date"),

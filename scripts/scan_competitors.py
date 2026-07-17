@@ -58,9 +58,16 @@ def run_yt_dlp(url: str, recent_n: int) -> dict:
     result = subprocess.run(
         cmd, capture_output=True, text=True, encoding="utf-8", errors="replace"
     )
-    if result.returncode != 0:
-        raise RuntimeError((result.stderr or "yt-dlp 실패").strip()[-500:])
-    return json.loads(result.stdout)
+    # yt-dlp는 범위 내 일부 영상 실패(멤버십·삭제 등) 시에도 전체 JSON을
+    # stdout에 내고 exit!=0으로 끝난다. stdout이 파싱되면 그걸 쓰고,
+    # 정말 비었거나 깨졌을 때만 실패로 본다.
+    stdout = (result.stdout or "").strip()
+    if stdout:
+        try:
+            return json.loads(stdout)
+        except json.JSONDecodeError:
+            pass
+    raise RuntimeError((result.stderr or "yt-dlp 실패").strip()[-500:])
 
 
 def parse_args(argv: list[str]) -> dict | None:
@@ -92,7 +99,7 @@ def parse_args(argv: list[str]) -> dict | None:
         config_path = PROJECT_ROOT / "channels" / channel_id / "competitors.yaml"
         if config_path.is_file():
             config = load_yaml(config_path) or {}
-            urls = [c["url"] for c in config.get("competitors", []) if c.get("url")]
+            urls = [c["url"] for c in (config.get("competitors") or []) if c.get("url")]
     if not urls:
         return None
     return {"urls": urls, "channel_id": channel_id, "recent_n": recent_n}

@@ -49,6 +49,15 @@ class TestParseFlatPlaylist(unittest.TestCase):
         self.assertEqual(parsed["videos"], [])
         self.assertEqual(parsed["skipped_count"], 0)
 
+    def test_webpage_url_preferred_over_stream_url(self):
+        raw = {"channel": "풀추출", "entries": [
+            {"id": "f1", "title": "영상 F", "view_count": 10,
+             "url": "https://rr1---sn.googlevideo.com/videoplayback?expire=1",
+             "webpage_url": "https://www.youtube.com/watch?v=f1"},
+        ]}
+        parsed = parse_flat_playlist(raw)
+        self.assertEqual(parsed["videos"][0]["url"], "https://www.youtube.com/watch?v=f1")
+
 
 class TestAnalyzeChannel(unittest.TestCase):
     def test_avg_median_and_multiples(self):
