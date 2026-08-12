@@ -1,0 +1,20 @@
+# BGM 믹싱 설정
+# 근거: docs/36 #8 (BGM 믹싱 v1.1)
+# 음원은 사용자가 음악 생성 AI(Suno/Udio 등)로 만들어 bgm_library/ 에 둔다.
+# 없으면 BGM 없이 합성된다 (선택). 넣는 순간부터 자동 믹싱된다.
+
+# 프로젝트별로 어떤 트랙을 쓸지 지정하지 않으면 이 기본 트랙을 찾는다.
+# (프로젝트별 지정은 compose_final_video.py 인자로 넘긴다.)
+default_track: main_theme.mp3
+
+# 믹싱 파라미터
+mix:
+  music_gain_db: -20        # BGM 기본 음량 (나레이션 대비 배경 레벨)
+  duck_gain_db: -32         # 나레이션이 나오는 구간의 BGM 음량 (자동 덕킹)
+  fade_in_seconds: 2.0      # 시작 페이드인
+  fade_out_seconds: 2.5     # 끝 페이드아웃
+  narration_gain_db: 0      # 나레이션 음량 보정 (기본 그대로)
+
+# 트랙 출처·저작권 기록 (사용자가 채운다)
+track_notes:
+  main_theme.mp3: "(음원 추가 후 출처·라이선스 기록)"

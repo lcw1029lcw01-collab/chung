@@ -1,0 +1,34 @@
+# Scene Script Engine v1 defaults
+# 근거: docs/37_SCENE_SCRIPT_AND_WORLD_ENGINE_V1.md
+# 원칙: 대본은 "글"이 아니라 "장면(Scene)"으로 쓴다. 영상은 영화 시나리오처럼.
+
+scene_rules:
+  scene_seconds_min: 6                  # 장면 하나의 최소 길이
+  scene_seconds_max: 15                 # 장면 하나의 최대 길이
+  scenes_per_25min_min: 120             # 25분 기준 장면 수 목표 하한
+  scenes_per_25min_max: 180             # 25분 기준 장면 수 목표 상한
+  max_scenes_per_narration_block: 3     # 나레이션 블록 하나를 쪼개는 최대 장면 수
+
+# 스토리 구간별 기본 감정 (Typecast 감정 지정의 기준)
+emotion_by_section:
+  hook: wonder
+  setup: calm
+  development: tension
+  payoff: awe
+  ending: hope
+
+# 모션(영상화) 프롬프트에 섞는 미세 모션 — 살아있는 화면의 핵심
+# provider는 midjourney_video 고정 (이미지·영상은 무조건 미드저니, docs/38 #6)
+motion_micro_motions:
+  - wind blowing gently
+  - dust particles drifting in the air
+  - natural eye blinking
+  - soft breathing movement
+  - fabric rippling slightly
+  - distant lights flickering
+  - thin mist flowing slowly
+  - loose hair strands moving
+
+# 장면 필드 순환 기본값 (dummy 모드 placeholder 생성용)
+time_of_day_cycle: [dawn, morning, noon, dusk, night]
+weather_cycle: [clear, rain, fog, dust_wind, snow]

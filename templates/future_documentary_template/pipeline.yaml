@@ -1,0 +1,238 @@
+# 10~20분 롱폼 다큐·스토리 파이프라인 정의.
+# stage 순서는 프로젝트 생성 시 snapshot되며, 이후 템플릿이 바뀌어도
+# 진행 중인 프로젝트에는 영향을 주지 않는다.
+#
+# kind:
+#   creative_workflow — AI 판단이 필요한 단계 (work order 생성 → 사람이 결과 import)
+#   deterministic     — 일반 코드가 정확하게 수행하는 단계
+#   provider_job      — 외부 도구 작업 생성 후 결과 import 대기
+#   human_gate        — 사람 승인 필요
+#   quality_gate      — 기술/편집/안전 검사 통과 필요
+#   package           — 업로드 준비 상태로 묶는 단계
+#
+# executor는 코드의 ExecutorRegistry allowlist에 등록된 이름만 사용할 수 있다.
+
+pipeline_id: longform_documentary_v1
+pipeline_version: 1.0.0
+description: 기회 조사 → 전략 → 승인 → 리서치 → 대본 → 승인 → 연출 → 자산 제작 → 합성 → 품질/안전 → 패키지 → 게시 승인
+
+stages:
+  - id: PROJECT_INTAKE
+    title: 프로젝트 접수
+    description: 프로젝트 입력값 검증과 작업 공간 초기화.
+    kind: deterministic
+    owner_role: platform_operations
+    executor: project.intake
+    requires: []
+    produces: [project_intake]
+    depends_on: []
+    approval: null
+    retry_policy: {max_attempts: 3}
+    external_side_effect: false
+    cost_tracking: false
+    enabled: true
+
+  - id: OPPORTUNITY_RESEARCH
+    title: 기회 조사
+    description: 시장/경쟁/수요 신호를 조사해 기회 가설을 만든다.
+    kind: creative_workflow
+    owner_role: strategy_market_intelligence
+    executor: longform.opportunity_research
+    requires: [project_intake]
+    produces: [opportunity_research]
+    depends_on: [PROJECT_INTAKE]
+    approval: null
+    retry_policy: {max_attempts: 3}
+    external_side_effect: false
+    cost_tracking: true
+    enabled: true
+
+  - id: CONTENT_STRATEGY
+    title: 콘텐츠 전략
+    description: 타깃 시청자·핵심 약속·차별화·성공 가설을 확정한다.
+    kind: creative_workflow
+    owner_role: strategy_market_intelligence
+    executor: longform.strategy
+    requires: [project_intake, opportunity_research]
+    produces: [content_strategy]
+    depends_on: [OPPORTUNITY_RESEARCH]
+    approval: null
+    retry_policy: {max_attempts: 3}
+    external_side_effect: false
+    cost_tracking: true
+    enabled: true
+
+  - id: CONCEPT_APPROVAL
+    title: 컨셉 승인
+    description: 전략 방향을 사람이 승인해야 리서치·대본으로 진행한다.
+    kind: human_gate
+    owner_role: executive_editor
+    executor: approval.concept
+    requires: [content_strategy]
+    produces: [concept_approval]
+    depends_on: [CONTENT_STRATEGY]
+    approval:
+      approvers: [executive_editor]
+      decisions: [APPROVE, REQUEST_REVISION, REJECT]
+    retry_policy: {max_attempts: 3}
+    external_side_effect: false
+    cost_tracking: false
+    enabled: true
+
+  - id: EVIDENCE_RESEARCH
+    title: 근거 리서치
+    description: 주장별 출처·사실/시나리오 구분·불확실성을 정리한다.
+    kind: creative_workflow
+    owner_role: editorial_research
+    executor: longform.evidence_research
+    requires: [content_strategy, concept_approval]
+    produces: [evidence_research]
+    depends_on: [CONCEPT_APPROVAL]
+    approval: null
+    retry_policy: {max_attempts: 3}
+    external_side_effect: false
+    cost_tracking: true
+    enabled: true
+
+  - id: STORY_SCRIPT
+    title: 스토리 대본
+    description: 훅·질문·막 구조·나레이션 블록·페이오프를 담은 대본.
+    kind: creative_workflow
+    owner_role: story_direction
+    executor: longform.script
+    requires: [content_strategy, evidence_research]
+    produces: [story_script]
+    depends_on: [EVIDENCE_RESEARCH]
+    approval: null
+    retry_policy: {max_attempts: 3}
+    external_side_effect: false
+    cost_tracking: true
+    enabled: true
+
+  - id: SCRIPT_APPROVAL
+    title: 대본 승인
+    description: 대본을 사람이 승인해야 연출·자산 제작으로 진행한다.
+    kind: human_gate
+    owner_role: executive_editor
+    executor: approval.script
+    requires: [story_script]
+    produces: [script_approval]
+    depends_on: [STORY_SCRIPT]
+    approval:
+      approvers: [executive_editor]
+      decisions: [APPROVE, REQUEST_REVISION, REJECT]
+    retry_policy: {max_attempts: 3}
+    external_side_effect: false
+    cost_tracking: false
+    enabled: true
+
+  - id: DIRECTION_ASSET_PLAN
+    title: 연출·자산 계획
+    description: 장면 연출과 샷 단위 자산 계획(이미지/모션/음성)을 만든다.
+    kind: creative_workflow
+    owner_role: story_direction
+    executor: longform.direction
+    requires: [story_script, script_approval]
+    produces: [direction_asset_plan]
+    depends_on: [SCRIPT_APPROVAL]
+    approval: null
+    retry_policy: {max_attempts: 3}
+    external_side_effect: false
+    cost_tracking: true
+    enabled: true
+
+  - id: ASSET_PRODUCTION
+    title: 자산 제작
+    description: Provider 작업(job)을 생성하고 사람이 결과 자산을 배치·import한다.
+    kind: provider_job
+    owner_role: production_operations
+    executor: provider.asset_production
+    requires: [direction_asset_plan]
+    produces: [production_assets]
+    depends_on: [DIRECTION_ASSET_PLAN]
+    approval: null
+    retry_policy: {max_attempts: 3}
+    external_side_effect: false   # v1: 작업 기록만 생성, 실제 외부 호출 없음
+    cost_tracking: true
+    enabled: true
+
+  - id: ASSET_REVIEW
+    title: 자산 검토
+    description: 제작된 자산(이미지/모션/음성)을 사람이 검토·승인한다.
+    kind: human_gate
+    owner_role: production_operations
+    executor: approval.assets
+    requires: [production_assets]
+    produces: [asset_review]
+    depends_on: [ASSET_PRODUCTION]
+    approval:
+      approvers: [production_operations, executive_editor]
+      decisions: [APPROVE, REQUEST_REVISION, REJECT]
+    retry_policy: {max_attempts: 3}
+    external_side_effect: false
+    cost_tracking: false
+    enabled: true
+
+  - id: COMPOSITION
+    title: 영상 합성
+    description: 자산 존재 검사 → 오디오 실측 → 세그먼트 조립 → 자막 번인 → 검증.
+    kind: deterministic
+    owner_role: post_production
+    executor: longform.composition
+    requires: [production_assets, asset_review]
+    produces: [final_video, composition_report]
+    depends_on: [ASSET_REVIEW]
+    approval: null
+    retry_policy: {max_attempts: 3}
+    external_side_effect: false
+    cost_tracking: false
+    enabled: true
+
+  - id: QUALITY_SAFETY
+    title: 품질·안전 검사
+    description: technical/editorial/trust_and_safety 검사. blocker가 있으면 진행 불가.
+    kind: quality_gate
+    owner_role: quality_trust
+    executor: longform.quality_safety
+    requires: [final_video, composition_report, story_script, evidence_research, content_strategy]
+    produces: [quality_safety_report]
+    depends_on: [COMPOSITION]
+    approval:
+      approvers: [quality_trust, executive_editor]
+      decisions: [APPROVE, REQUEST_REVISION, REJECT]
+    retry_policy: {max_attempts: 3}
+    external_side_effect: false
+    cost_tracking: false
+    enabled: true
+
+  - id: PACKAGE_READY
+    title: 업로드 패키지
+    description: 제목·설명·썸네일·영상·자막·챕터를 업로드 준비 상태로 묶는다.
+    kind: package
+    owner_role: distribution_growth
+    executor: longform.package
+    requires: [final_video, quality_safety_report, content_strategy, story_script]
+    produces: [upload_package]
+    depends_on: [QUALITY_SAFETY]
+    approval: null
+    retry_policy: {max_attempts: 3}
+    external_side_effect: false
+    cost_tracking: false
+    enabled: true
+
+  - id: PUBLISH_APPROVAL
+    title: 게시 승인
+    description: 최종 영상·메타데이터·정책 체크 결과를 보고 사람이 게시를 승인한다.
+    kind: human_gate
+    owner_role: executive_editor
+    executor: approval.publish
+    requires: [upload_package]
+    produces: [publish_approval]
+    depends_on: [PACKAGE_READY]
+    approval:
+      approvers: [executive_editor]
+      decisions: [APPROVE, REQUEST_REVISION, REJECT]
+    retry_policy: {max_attempts: 3}
+    external_side_effect: false
+    cost_tracking: false
+    enabled: true

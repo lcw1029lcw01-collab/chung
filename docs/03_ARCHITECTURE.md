@@ -1,3 +1,9 @@
+Create or replace the file `docs/03_ARCHITECTURE.md` with the following content.
+
+Do not modify any other files.
+
+---
+
 # 03_ARCHITECTURE.md
 
 Version: 1.0.0  

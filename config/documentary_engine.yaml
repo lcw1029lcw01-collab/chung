@@ -1,0 +1,28 @@
+# AI Documentary Engine v1 defaults
+# 근거: docs/35_AI_DOCUMENTARY_ENGINE_V1.md
+# 원칙: AI 영상을 남용하지 않는다. 사람은 영상이 아니라 장면 전환(Scene Change)을 본다.
+
+default_duration_minutes: 25
+
+# 25분 기준 자산 비율 (합계 100)
+asset_mix:
+  ai_video_percent: 22                  # 감정·임팩트 장면에만 사용
+  image_camera_movement_percent: 55     # MJ 이미지 + 카메라 무빙 (가장 비용 효율적)
+  infographic_percent: 15               # 지도/UI/홀로그램/타임라인
+  text_emphasis_percent: 8              # 텍스트/숫자 강조 연출
+
+# 샷 길이 규칙 (장면 전환 원칙 — 짧은 샷의 연속이 긴 영상 하나보다 비싸 보인다)
+shot_duration_rules:
+  ai_video_max_seconds: 5               # AI 영상은 5초를 넘기지 않는다
+  image_shot_seconds_min: 2
+  image_shot_seconds_max: 6
+  infographic_seconds_min: 4
+  infographic_seconds_max: 10
+  text_emphasis_seconds_min: 2          # docs/35 #6 — 카운트 추정에 필요해 추가
+  text_emphasis_seconds_max: 5
+
+style_defaults:
+  visual_style: netflix_future_documentary
+  color_palette: cyan_orange_dark
+  camera_language: cinematic_documentary
+  no_text_rule: true                    # 프레임 안에 읽을 수 있는 텍스트 금지

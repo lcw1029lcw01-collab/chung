@@ -1,0 +1,62 @@
+# 자막 스타일 프리셋 라이브러리 (Subtitle Engine v1)
+# 채널은 brand_profile.yaml의 subtitle_style로 프리셋 이름 하나를 고르고,
+# subtitle_overrides로 일부 값만 덮어쓴다.
+# 해석 순서: default ← preset ← 채널 overrides.
+#
+# 값 단위: 1920x1080 기준 픽셀. 색은 ASS &HAABBGGRR (AA=00 불투명, FF=투명).
+# max_chars_per_line/max_lines는 리플로우(줄바꿈)용, 나머지는 ASS 스타일용.
+# 근거: docs/superpowers/specs/2026-07-12-longform-subtitle-system-design.md
+#       넷플릭스 한국어 자막 가이드(줄당 16자·2줄·초당 12자).
+
+default:
+  FontName: "Malgun Gothic"
+  Fontsize: 50
+  Bold: 1
+  PrimaryColour: "&H00FFFFFF"     # 흰색 글자
+  OutlineColour: "&H00000000"     # 검정 외곽선
+  BackColour: "&H00000000"
+  BorderStyle: 1                  # 1=외곽선+그림자, 3=박스
+  Outline: 2.4
+  Shadow: 1.2
+  Alignment: 2                    # 하단 중앙
+  MarginL: 160
+  MarginR: 160
+  MarginV: 70
+  max_chars_per_line: 16
+  max_lines: 2
+
+presets:
+  # 넷플릭스 다큐형 — 흰 글자 + 얇은 검정 외곽선, 박스 없음. Civilization 2100.
+  # 폰트 70px = 화면 높이 6.5%. 유튜브(폰) 가독성 기준으로 사용자 선택(50px는 너무 작았음).
+  documentary:
+    Fontsize: 70
+    Bold: 1
+    BorderStyle: 1
+    Outline: 2.8
+    Shadow: 1.4
+    MarginV: 76
+
+  # 정보성/예능형 — 크게 + 반투명 검정 박스로 어떤 배경에서도 100% 가독.
+  punchy:
+    Fontsize: 56
+    Bold: 1
+    BorderStyle: 3                # 불투명 박스
+    BackColour: "&H80000000"     # 50% 투명 검정 박스
+    Outline: 4
+    Shadow: 0
+    MarginV: 84
+    MarginL: 120
+    MarginR: 120
+    max_chars_per_line: 18
+
+  # 시네마 미니멀 — 작게 + 하단 여백 크게, 외곽선 얇게. 분위기 우선.
+  cinematic:
+    Fontsize: 44
+    Bold: 0
+    BorderStyle: 1
+    Outline: 1.6
+    Shadow: 1.0
+    MarginV: 104
+    MarginL: 220
+    MarginR: 220
+    max_chars_per_line: 20

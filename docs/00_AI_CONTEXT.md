@@ -1,3 +1,9 @@
+Create or replace the file `docs/00_AI_CONTEXT.md` with the following content.
+
+Do not modify any other files.
+
+---
+
 # 00_AI_CONTEXT.md
 
 Version: 1.0.0  

@@ -1,13 +1,31 @@
-# 최소 샘플 템플릿 (walking skeleton)
-# 전체 Template System 스키마는 docs/08_TEMPLATE_SYSTEM.md 기준으로 이후 확장한다.
+# 10~20분 롱폼 다큐·스토리 템플릿 (production bundle)
+# 최소 필드(walking skeleton 호환)는 유지하고, production bundle 참조를 추가했다.
+# 전체 Template System 스키마: docs/08_TEMPLATE_SYSTEM.md
 
 template_id: future_documentary_template
 name: Future Documentary Template
 version: 1.0.0
+template_version: 1.0.0
 status: ACTIVE
 category: future
-description: 미래를 다큐멘터리 스타일로 다루는 채널을 만들기 위한 최소 샘플 템플릿.
+description: 미래를 다큐멘터리 스타일로 다루는 채널을 만들기 위한 롱폼 템플릿.
 default_language: ko
 supported_languages:
   - ko
   - en
+
+# --- production bundle 참조 ---
+content_type: longform_documentary
+pipeline_file: pipeline.yaml
+project_form_file: project_form.yaml
+project_view_file: project_view.yaml
+roles_file: roles.yaml
+quality_file: quality.yaml
+
+# 권장 길이 600~1200초(10~20분). 기존 25분(1500초) 데모 호환을 위해
+# hard maximum은 1800초. 권장 범위 밖은 경고, hard maximum 초과만 실패.
+recommended_duration_seconds:
+  min: 600
+  max: 1200
+allowed_duration_seconds:
+  max: 1800

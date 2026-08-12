@@ -1,0 +1,15 @@
+# ADOS Python 의존성 — 현재 코드가 실제로 사용하는 패키지만 명시한다.
+# 설치: pip install -r requirements.txt
+# (자동 설치 코드는 없다 — scripts/check_environment.py로 누락을 확인할 수 있다)
+
+# 필수 — core/file_loader(yaml), engines 전반
+PyYAML>=6.0
+
+# 필수 — providers/typecast_provider.py (실제 Typecast API 호출 시)
+requests>=2.31
+
+# 선택 — scripts/mj_auto_produce.py (미드저니 CDP 브리지)
+playwright>=1.40
+
+# 선택 — scripts/scan_competitors.py (경쟁 채널 스캐너)
+yt-dlp>=2024.1.1

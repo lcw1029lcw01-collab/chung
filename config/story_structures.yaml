@@ -1,0 +1,26 @@
+# Story structure templates — "Story Engine만 바꾸면 채널이 바뀐다"
+# 근거: docs/38_DIRECTOR_EMOTION_ENGINE_V1.md #4
+# 80%는 같은 코드, 채널(장르)마다 스토리 구조 템플릿만 교체한다.
+
+default_template: documentary_default
+
+templates:
+  documentary_default:
+    description: 기본 다큐 구조 (기존 파이프라인과 동일)
+    sections: [hook, setup, development, payoff, ending]
+
+  beyond_humanity:
+    description: 미래 다큐 — 반전과 철학적 질문으로 끝난다
+    sections: [hook, conflict, discovery, twist, ending, question]
+
+  history:
+    description: 역사 채널 — 갈등과 전환점, 결전의 서사
+    sections: [hook, conflict, turning_point, battle, ending]
+
+  psychology:
+    description: 심리 채널 — 질문에서 실험과 과학으로
+    sections: [question, experiment, science, explanation, conclusion]
+
+  civilization:
+    description: 문명/경제 채널 — 국가의 과거에서 미래로
+    sections: [country, history, culture, economy, future]

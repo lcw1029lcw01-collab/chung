@@ -1,0 +1,72 @@
+# 프로젝트 화면 정의 (render-neutral view model의 탭·카드 구성).
+# ProjectViewBuilder가 이 설정과 런타임 상태를 합쳐 ui/project_view.json을 만든다.
+# Python 코드에 템플릿 전용 탭을 하드코딩하지 않는다.
+
+view_id: longform_documentary_view
+view_version: 1.0.0
+
+kpis:
+  - key: target_duration_seconds
+    label: 목표 길이(초)
+    source: project_inputs.target_duration_seconds
+  - key: actual_duration_seconds
+    label: 실제 길이(초)
+    source: artifact_metadata.final_video.duration_seconds
+  - key: total_actual_cost
+    label: 실비용 합계
+    source: costs.total_actual
+
+tabs:
+  - id: overview
+    title: 개요
+    stages: [PROJECT_INTAKE]
+    artifacts: [project_intake]
+    cards: [project_summary, pipeline_progress, blockers, next_action, costs]
+
+  - id: strategy
+    title: 전략
+    stages: [OPPORTUNITY_RESEARCH, CONTENT_STRATEGY, CONCEPT_APPROVAL]
+    artifacts: [opportunity_research, content_strategy, concept_approval]
+    cards: [stage_status, artifact_list, approvals]
+
+  - id: research
+    title: 리서치
+    stages: [EVIDENCE_RESEARCH]
+    artifacts: [evidence_research]
+    cards: [stage_status, artifact_list]
+
+  - id: script
+    title: 대본
+    stages: [STORY_SCRIPT, SCRIPT_APPROVAL]
+    artifacts: [story_script, script_approval]
+    cards: [stage_status, artifact_list, approvals]
+
+  - id: direction
+    title: 연출
+    stages: [DIRECTION_ASSET_PLAN]
+    artifacts: [direction_asset_plan]
+    cards: [stage_status, artifact_list]
+
+  - id: production
+    title: 자산 제작
+    stages: [ASSET_PRODUCTION, ASSET_REVIEW]
+    artifacts: [production_assets, asset_review]
+    cards: [stage_status, provider_jobs, artifact_list, approvals]
+
+  - id: post_production
+    title: 후반 제작
+    stages: [COMPOSITION]
+    artifacts: [final_video, composition_report]
+    cards: [stage_status, artifact_list]
+
+  - id: quality_safety
+    title: 품질·안전
+    stages: [QUALITY_SAFETY]
+    artifacts: [quality_safety_report]
+    cards: [stage_status, artifact_list, approvals]
+
+  - id: package
+    title: 패키지
+    stages: [PACKAGE_READY, PUBLISH_APPROVAL]
+    artifacts: [upload_package, publish_approval]
+    cards: [stage_status, artifact_list, approvals, next_action]

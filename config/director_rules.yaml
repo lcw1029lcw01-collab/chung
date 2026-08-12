@@ -1,0 +1,94 @@
+# Director rules — ADOS의 두뇌
+# 근거: docs/38_DIRECTOR_EMOTION_ENGINE_V1.md
+# 원칙: Prompt는 결과물이다. Director가 먼저 결정한다.
+#   감정 → 카메라 → 렌즈 → 색감 → 조명 → 음악 → 속도 → (그 다음에) Prompt
+#
+# camera 값은 documentary_bible의 CAMERA_BIBLE 키와 일치해야 한다.
+# color 값은 prompt_blueprint_engine의 PALETTE_ENVIRONMENTS 키와 일치해야 한다.
+
+default_emotion: calm
+
+# 한국어 감정명 별칭 (장면 대본이 한국어 감정을 써도 인식)
+aliases:
+  외로움: loneliness
+  공포: fear
+  희망: hope
+  신비: mystery
+  경이: wonder
+  평온: calm
+  긴장: tension
+  경외: awe
+
+emotions:
+  loneliness:                     # 외로움 → Wide + Blue + Rain/Fog + Low Piano
+    camera: ultra_wide_establishing
+    lens: 24mm
+    color: blue_earth
+    lighting: cold dawn light
+    weather_hint: [rain, fog]
+    music: low solo piano
+    pace: slow
+    movement_hint: slow dolly
+  fear:                           # 공포 → Close Up + Red + Heartbeat + Shaking
+    camera: close_up
+    lens: 85mm
+    color: red_danger
+    lighting: hard shadow light
+    weather_hint: [storm]
+    music: heartbeat pulse
+    pace: fast
+    movement_hint: subtle handheld shake
+  hope:                           # 희망 → Sunrise + Wide + Slow Piano
+    camera: ultra_wide_establishing
+    lens: 35mm
+    color: orange_amber
+    lighting: golden sunrise
+    weather_hint: [clear]
+    music: slow warm piano
+    pace: slow
+    movement_hint: slow rise
+  mystery:                        # 신비 → Fog + Orbit + Ambient
+    camera: drone_orbit
+    lens: 35mm
+    color: cyan_orange_dark
+    lighting: diffused fog glow
+    weather_hint: [fog]
+    music: ambient drone
+    pace: slow
+    movement_hint: slow orbit
+  wonder:
+    camera: low_angle
+    lens: 24mm
+    color: cyan_orange_dark
+    lighting: volumetric god rays
+    weather_hint: [clear]
+    music: swelling strings
+    pace: medium
+    movement_hint: slow tilt up
+  calm:
+    camera: high_angle
+    lens: 50mm
+    color: blue_earth
+    lighting: soft overcast light
+    weather_hint: [clear]
+    music: gentle ambient
+    pace: medium
+    movement_hint: static
+  tension:
+    camera: extreme_close_up
+    lens: 100mm_macro
+    color: red_danger
+    lighting: hard side light
+    weather_hint: [dust_wind]
+    music: ticking percussion
+    pace: fast
+    movement_hint: rack focus
+  awe:
+    camera: drone_orbit
+    lens: 24mm
+    color: orange_amber
+    lighting: epic backlight
+    weather_hint: [clear]
+    music: deep orchestral swell
+    pace: slow
+    movement_hint: slow crane

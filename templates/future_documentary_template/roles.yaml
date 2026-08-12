@@ -1,0 +1,104 @@
+# 회사 역할 정의.
+# role은 책임과 권한을 표현한다 — 서로 자유롭게 대화하는 독립 AI 프로세스가 아니다.
+# creative_workflow 단계만 AI 판단을 사용할 수 있고,
+# 렌더링·파일 변환·자막·비용·상태 변경은 deterministic code가 처리한다.
+
+roles:
+  - role_id: platform_operations
+    name: 플랫폼 운영
+    responsibility: 프로젝트 접수, 입력 검증, 작업 공간·상태 파일 관리.
+    allowed_step_kinds: [deterministic]
+    required_inputs: [project_inputs]
+    expected_outputs: [project_intake]
+    can_approve: false
+    can_trigger_external_action: false
+    kpi: [intake_validation_pass_rate]
+    failure_conditions: [잘못된 입력을 통과시킴, 상태 파일 손상]
+
+  - role_id: strategy_market_intelligence
+    name: 전략·시장 정보
+    responsibility: 기회 조사와 콘텐츠 전략 수립. 초기 방향 결정의 품질을 책임진다.
+    allowed_step_kinds: [creative_workflow]
+    required_inputs: [project_intake]
+    expected_outputs: [opportunity_research, content_strategy]
+    can_approve: false
+    can_trigger_external_action: false
+    kpi: [strategy_approval_rate, success_hypothesis_accuracy]
+    failure_conditions: [근거 없는 전략, 차별화 없는 기획, 정책 리스크 누락]
+
+  - role_id: editorial_research
+    name: 편집 리서치
+    responsibility: 주장별 출처 확보, 사실/시나리오 구분, 고위험 주장 식별.
+    allowed_step_kinds: [creative_workflow]
+    required_inputs: [content_strategy]
+    expected_outputs: [evidence_research]
+    can_approve: false
+    can_trigger_external_action: false
+    kpi: [claims_with_sources_ratio]
+    failure_conditions: [출처 없는 주장 방치, 사실과 추정 혼동]
+
+  - role_id: story_direction
+    name: 스토리·연출
+    responsibility: 대본(훅·구조·페이오프)과 장면 연출·자산 계획 작성.
+    allowed_step_kinds: [creative_workflow]
+    required_inputs: [evidence_research, content_strategy]
+    expected_outputs: [story_script, direction_asset_plan]
+    can_approve: false
+    can_trigger_external_action: false
+    kpi: [script_approval_rate, retention_potential]
+    failure_conditions: [훅 없음, 근거 없는 주장 삽입, 연출 계획 불일치]
+
+  - role_id: production_operations
+    name: 제작 운영
+    responsibility: Provider 작업 생성·추적, 결과 자산 배치 확인·검토.
+    allowed_step_kinds: [provider_job, human_gate]
+    required_inputs: [direction_asset_plan]
+    expected_outputs: [production_assets, asset_review]
+    can_approve: true
+    can_trigger_external_action: true
+    kpi: [asset_completion_rate, rework_rate]
+    failure_conditions: [누락 자산 방치, 무단 외부 호출]
+
+  - role_id: post_production
+    name: 후반 제작
+    responsibility: 합성 파이프라인 실행 — 조립·자막·검증. 결정적 코드만 사용한다.
+    allowed_step_kinds: [deterministic]
+    required_inputs: [production_assets]
+    expected_outputs: [final_video, composition_report]
+    can_approve: false
+    can_trigger_external_action: false
+    kpi: [composition_pass_rate]
+    failure_conditions: [검증 없이 완료 처리, 기존 결과 무단 덮어쓰기]
+
+  - role_id: quality_trust
+    name: 품질·신뢰
+    responsibility: technical/editorial/trust_and_safety 게이트 운영. 점수 조작 금지.
+    allowed_step_kinds: [quality_gate, human_gate]
+    required_inputs: [final_video, story_script, evidence_research]
+    expected_outputs: [quality_safety_report]
+    can_approve: true
+    can_trigger_external_action: false
+    kpi: [blocker_detection_rate]
+    failure_conditions: [검증 근거 없는 PASS, blocker 무시 진행]
+
+  - role_id: distribution_growth
+    name: 배포·성장
+    responsibility: 업로드 패키지 구성(제목·설명·태그·챕터·공개 범위 초안).
+    allowed_step_kinds: [package]
+    required_inputs: [final_video, quality_safety_report, content_strategy]
+    expected_outputs: [upload_package]
+    can_approve: false
+    can_trigger_external_action: false
+    kpi: [package_completeness]
+    failure_conditions: [필수 메타데이터 누락, 승인 전 게시 상태 변경]
+
+  - role_id: executive_editor
+    name: 편집장
+    responsibility: 컨셉·대본·품질·게시의 최종 승인. 사람 결정을 대표한다.
+    allowed_step_kinds: [human_gate, quality_gate]
+    required_inputs: [content_strategy, story_script, upload_package]
+    expected_outputs: [concept_approval, script_approval, publish_approval]
+    can_approve: true
+    can_trigger_external_action: false
+    kpi: [decision_turnaround]
+    failure_conditions: [기록 없는 승인, 검토 없이 승인]

@@ -1,0 +1,92 @@
+# 품질·안전 규칙 정의 (QUALITY_SAFETY 게이트가 사용).
+# 검증 근거가 없는 검사 항목은 UNASSESSED로 남는다 — 임의의 숫자 점수를 만들지 않는다.
+
+quality_rules:
+  technical:
+    - rule_id: tech.required_files
+      description: 최종 영상 등 필수 파일 존재
+      severity: BLOCKER
+    - rule_id: tech.file_size
+      description: 파일 크기가 0이 아님
+      severity: BLOCKER
+    - rule_id: tech.ffprobe
+      description: ffprobe로 컨테이너/스트림 판독 성공
+      severity: BLOCKER
+    - rule_id: tech.duration
+      description: 영상 길이가 허용 범위 안
+      severity: MAJOR
+    - rule_id: tech.resolution
+      description: 해상도 1920x1080 이상
+      severity: MAJOR
+    - rule_id: tech.video_stream
+      description: 영상 스트림 존재
+      severity: BLOCKER
+    - rule_id: tech.audio_stream
+      description: 오디오 스트림 존재
+      severity: BLOCKER
+    - rule_id: tech.silence_or_corruption
+      description: 무음·손상 위험 징후 없음
+      severity: MAJOR
+    - rule_id: tech.subtitle_timing
+      description: 자막 시간 범위가 영상 안에 있음
+      severity: MAJOR
+    - rule_id: tech.subtitle_reading_speed
+      description: 자막 읽기 속도(초당 글자 수) 허용 범위
+      severity: MINOR
+    - rule_id: tech.subtitle_visibility
+      description: 자막이 실제 프레임에 렌더링됨(번인 검증)
+      severity: MAJOR
+
+  editorial:
+    - rule_id: edit.strategy_script_alignment
+      description: 전략(핵심 약속·타깃)과 대본 방향 일치
+      severity: MAJOR
+    - rule_id: edit.hook_and_payoff
+      description: 훅과 페이오프 존재
+      severity: MAJOR
+    - rule_id: edit.scene_repetition
+      description: 장면 반복(같은 구도·같은 소재 연속) 위험 없음
+      severity: MINOR
+    - rule_id: edit.unsupported_claims
+      description: 근거 없는 주장 없음(대본 주장 → 리서치 출처 연결)
+      severity: MAJOR
+    - rule_id: edit.previous_video_difference
+      description: 이전 영상과의 차이가 명시됨
+      severity: MINOR
+    - rule_id: edit.original_angle
+      description: 독창적 관점 존재
+      severity: MINOR
+    - rule_id: edit.templated_structure
+      description: 지나치게 템플릿화된 구성 아님
+      severity: MINOR
+
+  trust_and_safety:
+    - rule_id: trust.missing_sources
+      description: 출처 누락 없음
+      severity: MAJOR
+    - rule_id: trust.copyright_status
+      description: 저작권·상업 이용 권리 확인 상태 기록
+      severity: MAJOR
+    - rule_id: trust.ai_disclosure
+      description: AI 생성 공개 필요 여부 판정·기록
+      severity: MAJOR
+    - rule_id: trust.real_person_risk
+      description: 실존 인물 오해 가능성 없음
+      severity: MAJOR
+    - rule_id: trust.high_risk_claims
+      description: 건강·금융·법률 등 고위험 주장 없음(있다면 처리 기록)
+      severity: BLOCKER
+    - rule_id: trust.youtube_policy
+      description: YouTube 정책 위험 검토됨
+      severity: MAJOR
+
+# 게이트 결과 규칙:
+#   BLOCKER 실패 → BLOCKED
+#   MAJOR/MINOR 실패 → REVISION_REQUIRED
+#   실패 없음 + UNASSESSED 존재 → HUMAN_REVIEW_REQUIRED
+#   전 항목 PASS → PASS
+gate:
+  results: [PASS, HUMAN_REVIEW_REQUIRED, REVISION_REQUIRED, BLOCKED]
+  default_state: UNASSESSED
+  subtitle_max_cps: 12
+  min_resolution: {width: 1920, height: 1080}

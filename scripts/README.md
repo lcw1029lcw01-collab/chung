@@ -9,13 +9,49 @@
 
 ## 공통 안내
 
-- **어떤 스크립트도 실제 업로드나 실제 외부 Provider 호출을 하지 않는다**
-  (Midjourney/Typecast/YouTube 호출 없음, 실제 이미지·영상·음성 생성 없음).
+- **대부분의 스크립트는 실제 업로드나 외부 Provider 호출을 하지 않는다.**
+  단, 아래 두 스크립트는 **실제 외부 작업과 비용이 발생할 수 있다**:
+  - `generate_narration.py` — **Typecast API를 실제로 호출**해 음성을 생성한다 (크레딧 소모).
+  - `mj_auto_produce.py` — 디버그 크롬(CDP)으로 **미드저니에 실제 작업을 제출**한다
+    (구독 사용량 소모).
+  이 둘을 제외한 스크립트는 Midjourney/Typecast/YouTube를 호출하지 않는다.
+  어떤 스크립트도 YouTube 업로드는 하지 않는다.
 - 스크립트가 만드는 런타임 산출물(`channels/`, `projects/`)은 **gitignore 대상**이라
   커밋되지 않는다.
-- 전체 파이프라인은 dummy 모드로 동작하며, 산출물에는 placeholder임이 명시된다.
+- dummy 파이프라인의 산출물에는 placeholder임이 명시된다.
+  production 파이프라인(`ados.py`)은 placeholder 산출물을 통과시키지 않는다.
 
 ## ⭐ Canonical 명령
+
+### Production (실제 제작 워크플로우 — `ados.py`)
+
+```bash
+# 환경 점검 (필수 의존성 누락 시 non-zero exit)
+python scripts/check_environment.py
+
+# 템플릿 번들 검증
+python scripts/ados.py template validate future_documentary_template
+
+# production 프로젝트 생성 (채널의 템플릿 번들 snapshot + workflow 초기화)
+python scripts/ados.py project create --channel civilization_2100 --topic "주제" --duration 900
+
+# 게이트/입력 대기까지 실행 → 상태/다음 행동 확인
+python scripts/ados.py project run-until-gate PROJECT_PATH
+python scripts/ados.py project status PROJECT_PATH
+python scripts/ados.py project next PROJECT_PATH
+
+# creative 단계 결과 import (work order 스키마 검증 + placeholder 거부)
+python scripts/ados.py project import-result PROJECT_PATH STAGE_ID RESULT_FILE
+
+# 사람 승인 / 재시도
+python scripts/ados.py project approve PROJECT_PATH STAGE_ID --decision APPROVE --reviewer human
+python scripts/ados.py project retry PROJECT_PATH STAGE_ID [--force]
+```
+
+외부 호출이 선언된 stage는 config(`allow_external_calls`)와 `--allow-external`이
+둘 다 있어야 실행된다. 이 CLI는 업로드를 수행하지 않는다.
+
+### Dummy 데모 (레거시 walking skeleton)
 
 ```bash
 # 전체 dummy 파이프라인 (샘플 채널/프로젝트 → 20단계 완주 → 실행 보고서)
@@ -89,6 +125,55 @@ python scripts/run_real_manual_trial_finalize.py {project_path}
 ```
 
 validate/finalize는 project_path 인자가 없으면 사용법만 출력한다.
+
+## AI Documentary Engine v1 (프리미엄 다큐 연출 계층)
+
+```bash
+# 다큐멘터리 연출 계층 데모 — 더미 파이프라인을 Direction까지 실행한 뒤
+# 채널 다큐 바이블(카메라/컬러/캐릭터/모티프), 25분 자산 비율 계획,
+# 씬→샷 분해 리스트, 샷별 MJ 프롬프트 블루프린트, 플래그십 에피소드
+# 청사진(목표 95점)을 생성한다.
+# 이 계층은 샷/프롬프트 **블루프린트**를 만들 뿐, 실제 미디어는 만들지 않는다.
+# 근거: docs/35_AI_DOCUMENTARY_ENGINE_V1.md
+python scripts/run_documentary_engine_v1_demo.py
+```
+
+## Scene Script / Director / World Bible / SEO 계층
+
+```bash
+# "영상은 글이 아니라 장면(Scene)으로 만든다" + "Prompt는 결과물, Director가 먼저" —
+# 세계관 바이블(연속된 미래사) → 장면 대본(+GPT 작성 가이드) → 감독 연출 결정
+# (감정→카메라/렌즈/색감/조명/음악) → 장면 기반 샷 리스트 → MJ/모션 프롬프트
+# 블루프린트 → SEO 패키지(제목 20+20·챕터·태그)까지 생성한다.
+# 이미지·영상 프로바이더는 미드저니 고정 (docs/38 #6).
+# 실제 미디어 생성·업로드 없음. 근거: docs/37, docs/38
+python scripts/run_scene_script_engine_demo.py
+```
+
+## ⚠️ 실제 외부 Provider 호출 스크립트 (비용 발생)
+
+아래 두 스크립트는 **실제 외부 작업을 생성하며 비용/사용량이 발생한다.**
+실행 전 무엇이 제출되는지 반드시 확인하라.
+
+```bash
+# Typecast 신형 API로 나레이션 wav 실제 생성 (크레딧 소모)
+# 입력: {workspace}/narration_blocks.json + channels/{channel_id}/narration_profile.yaml
+python scripts/generate_narration.py {workspace} {channel_id} [--voice tc_xxx] [--emotion normal]
+
+# 미드저니 자동 제작 브리지 — 디버그 크롬(CDP :9222)으로 실제 이미지/영상 작업 제출
+# 사전 조건: 디버그 크롬 실행 + 미드저니 로그인 (구독 사용량 소모)
+python scripts/mj_auto_produce.py {workspace} [images|collect|animate|videos|all]
+```
+
+## 최종 영상 합성 (자막 번인 — 로컬 ffmpeg 실행)
+
+```bash
+# 수동 워크스페이스의 빌드 세그먼트를 재조립하고 자막을 번인한 뒤,
+# 자막이 실제 프레임에 보이는지 검증한다 (docs/36).
+# 외부 API 호출·업로드는 없다 — 로컬 ffmpeg만 사용한다.
+python scripts/compose_final_video.py {workspace_dir} [build_subdir] [lang]
+# 예) python scripts/compose_final_video.py manual_assets/20260710-141033-future-million-year-human notes/build3min ko
+```
 
 ## 단계별 데모 (디버깅용)
 

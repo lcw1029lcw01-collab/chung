@@ -1,0 +1,63 @@
+# 프로젝트 시작 입력 폼 정의.
+# ProjectEngine이 production 프로젝트 생성 시 이 폼으로 project_inputs를 검증한다.
+
+form_id: longform_documentary_project_form
+form_version: 1.0.0
+
+fields:
+  - name: topic
+    label: 주제
+    type: string
+    required: true
+  - name: content_goal
+    label: 콘텐츠 목표
+    type: string
+    required: true
+    default: 채널 성장에 기여하는 고몰입 롱폼 다큐
+  - name: target_viewer
+    label: 타깃 시청자
+    type: string
+    required: true
+    default: 미래 기술·문명에 관심 있는 18-44 시청자
+  - name: target_duration_seconds
+    label: 목표 길이(초)
+    type: integer
+    required: true
+    default: 900
+  - name: language
+    label: 언어
+    type: string
+    required: true
+    default: ko
+  - name: tone
+    label: 톤
+    type: string
+    required: false
+    default: 몰입·구체성·낙관적 긴장
+  - name: factuality_mode
+    label: 사실성 모드
+    type: string
+    required: true
+    default: fact_plus_scenario
+    enum: [strict_fact, fact_plus_scenario, fiction_labeled]
+  - name: desired_emotion
+    label: 목표 감정
+    type: string
+    required: false
+    default: 경이와 긴장
+  - name: approval_mode
+    label: 승인 모드
+    type: string
+    required: true
+    default: human_review
+    enum: [human_review, assisted_auto]
+  - name: budget_limit
+    label: 예산 한도
+    type: string
+    required: false
+    default: null
+  - name: notes
+    label: 메모
+    type: string
+    required: false
+    default: null

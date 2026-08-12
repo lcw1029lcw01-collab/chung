@@ -39,6 +39,10 @@ manual_assets/
 # 완성 영상 보관함 — 채널별 최종 산출물(대용량), 커밋하지 않는다
 완성영상/
 
+# BGM 라이브러리 — 음원(대용량 바이너리), 커밋하지 않는다 (README 제외)
+bgm_library/*
+!bgm_library/README.md
+
 # Temp
 *.tmp
 
