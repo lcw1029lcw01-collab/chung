@@ -1,9 +1,3 @@
-Create or replace the file `docs/15_WORKFLOW_ORCHESTRATOR.md` with the following content.
-
-Do not modify any other files.
-
----
-
 # 15_WORKFLOW_ORCHESTRATOR.md
 
 Version: 1.0.0  

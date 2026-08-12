@@ -1,9 +1,3 @@
-Create or replace the file `docs/08_TEMPLATE_SYSTEM.md` with the following content.
-
-Do not modify any other files.
-
----
-
 # 08_TEMPLATE_SYSTEM.md
 
 Version: 1.2.0  

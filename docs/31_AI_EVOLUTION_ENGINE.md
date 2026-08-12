@@ -1,9 +1,3 @@
-Create or replace the file `docs/31_AI_EVOLUTION_ENGINE.md` with the following content.
-
-Do not modify any other files.
-
----
-
 # 31_AI_EVOLUTION_ENGINE.md
 
 Version: 1.0.0  
@@ -1782,4 +1776,3 @@ AI Evolution Engine은 ADOS가 시간이 지날수록 더 좋은 회사처럼 �
 AI Evolution Engine의 목적은 AI가 마음대로 변하게 하는 것이 아니다.
 
 AI Evolution Engine의 목적은 CHUNG COMPANY의 AI Employees가 반복 작업을 통해 더 정확하고, 더 신중하고, 더 높은 품질의 판단을 하도록 안전하게 진화시키는 것이다.
-````

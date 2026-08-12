@@ -1,9 +1,3 @@
-Create or replace the file `docs/10_BRAND_SYSTEM.md` with the following content.
-
-Do not modify any other files.
-
----
-
 # 10_BRAND_SYSTEM.md
 
 Version: 1.0.0  
