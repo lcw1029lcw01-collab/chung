@@ -3,6 +3,7 @@ from .manual_asset_importer import ManualAssetImporter
 from .midjourney_provider import MidjourneyProvider
 from .midjourney_video_provider import MidjourneyVideoProvider
 from .provider_interface import PlaceholderProvider, ProviderInterface
+from .thumbnail_provider import ThumbnailProvider
 from .typecast_provider import TypecastProvider
 
 __all__ = [
@@ -10,6 +11,7 @@ __all__ = [
     "PlaceholderProvider",
     "MidjourneyProvider",
     "MidjourneyVideoProvider",
+    "ThumbnailProvider",
     "TypecastProvider",
     "ManualAssetImporter",
 ]
