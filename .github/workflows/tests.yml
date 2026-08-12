@@ -1,0 +1,39 @@
+name: tests
+
+on: [push, pull_request]
+
+jobs:
+  unittest:
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-latest, windows-latest]
+    runs-on: ${{ matrix.os }}
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.14'
+
+      # requirements.txt 전부를 깔지 않는다.
+      # 테스트가 실제로 필요로 하는 건 PyYAML 하나뿐이고(clean venv로 실측),
+      # requests·playwright·yt-dlp는 requirements.txt에 '선택'으로 표시돼 있다.
+      # 코어가 계속 의존성 가볍게 유지되는지를 CI가 대신 지켜준다.
+      # tzdata는 Asia/Seoul 타임존 테스트가 조용히 skip되지 않게 하려고 넣는다.
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install PyYAML tzdata
+
+      # tests/에 __init__.py가 없어서 `unittest discover`가 안 된다.
+      # 각 테스트가 문서화한 방식(python -m unittest tests.test_xxx)을 그대로 확장한다.
+      - name: Run unittest suite
+        shell: bash
+        env:
+          PYTHONIOENCODING: utf-8
+        run: |
+          MODULES=$(ls tests/test_*.py | sed 's|tests/|tests.|; s|\.py$||' | tr '\n' ' ')
+          echo "테스트 모듈 $(echo $MODULES | wc -w)개"
+          python -m unittest $MODULES
